@@ -13,7 +13,7 @@ Lets you choose a server's folders from any device. A browser's own folder windo
 
 The folder window in the app, and naming what kind of media each file is, stay with the server. If a version can't read a folder, the server tries it itself.
 
-How to use it is in **Help** inside WittyMediaServer: see the getting started guide.
+How to use it is in **Help** inside WittyMediaServer: see Getting started.
 
 ## How to get it
 

@@ -53,7 +53,7 @@ func TestList(t *testing.T) {
 	if byName["Swamptale"].Disc != "dvd" || byName["Treeline"].Disc != "bluray" || byName["alpha"].Disc != "" {
 		t.Errorf("disc folders: %+v %+v %+v", byName["Swamptale"], byName["Treeline"], byName["alpha"])
 	}
-	if byName["film.mkv"].Kind != "video" || byName["disc.iso"].Kind != "disc" || byName["Film.srt"].Kind != "subtitle" || byName["notes.txt"].Kind != "other" {
+	if byName["film.mkv"].Kind != "video" || byName["disc.iso"].Kind != "disc" || byName["Film.srt"].Kind != "subtitle" || byName["notes.txt"].Kind != "book" {
 		t.Errorf("kinds wrong: %+v", l.Entries)
 	}
 	if l.Counts["folder"] != 3 || l.Counts["video"] != 1 || l.Counts["disc"] != 1 {

@@ -216,12 +216,14 @@ var kinds = map[string]string{}
 
 func init() {
 	for kind, exts := range map[string]string{
-		"video":    ".mkv .mp4 .m4v .avi .mov .wmv .webm .ts .m2ts .mts .mpg .mpeg .vob .flv .ogv .3gp",
-		"audio":    ".mp3 .flac .m4a .aac .ogg .opus .wav .wma .alac .aiff .ape .m4b",
-		"book":     ".epub .pdf .cbz .cbr .cb7 .mobi .azw3",
-		"disc":     ".iso .img",
-		"subtitle": ".srt .ass .ssa .vtt .sub .idx .sup",
-		"image":    ".jpg .jpeg .png .webp .gif",
+		// For when it runs on its own: a server passes its registry's answer as Options.Kind.
+		"video":    ".mkv .mp4 .m4v .avi .mov .qt .wmv .asf .webm .ts .m2ts .mts .tp .trp .mpg .mpeg .mpe .m2v .vob .flv .f4v .ogv .ogm .3gp .3g2 .rm .rmvb .divx .xvid .mxf .dv .nut .y4m .gxf .wtv .dvr-ms .amv .mjpeg .ivf",
+		"audio":    ".mp3 .flac .m4a .m4b .aac .ogg .oga .opus .wav .wma .alac .aiff .aif .ape .wv .tta .mpc .dsf .dff .ac3 .eac3 .dts .truehd .mka .mid .midi .mod .xm .s3m .it",
+		"book":     ".epub .pdf .cbz .cbr .cb7 .cbt .mobi .azw .azw3 .kf8 .fb2 .djvu .txt .rtf .md .html .doc .docx .odt",
+		"disc":     ".iso .img .bin .cue .nrg .mdf",
+		"subtitle": ".srt .ass .ssa .vtt .sub .idx .sup .sbv .ttml .dfxp .smi .lrc .mks",
+		"image":    ".jpg .jpeg .png .webp .gif .avif .heic .heif .jxl .tif .tiff .bmp .ico .svg .cr2 .cr3 .nef .arw .dng .raf .orf .rw2",
+		"playlist": ".m3u .m3u8 .pls .xspf .asx",
 	} {
 		for _, e := range strings.Fields(exts) {
 			kinds[e] = kind

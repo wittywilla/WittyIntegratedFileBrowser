@@ -8,9 +8,9 @@ export type Place = { name: string; path: string; group: string; label?: string;
 export type Listing = { path: string; parent: string | null; sep: string; entries?: Entry[]; places?: Place[]; counts?: Record<string, number>; truncated?: boolean }
 
 const KIND_ICON: Record<string, React.ReactNode> = {
-  video: <IconFilm />, audio: <IconAudio />, book: <IconBook />, disc: <IconDisc />, subtitle: <IconSubs />, image: <IconImage />,
+  video: <IconFilm />, audio: <IconAudio />, book: <IconBook />, disc: <IconDisc />, subtitle: <IconSubs />, image: <IconImage />, playlist: <IconAudio />,
 }
-const KIND_NAME: Record<string, string> = { video: 'Video', audio: 'Audio', book: 'Book', disc: 'Disc image', subtitle: 'Subtitles', image: 'Picture', other: 'File' }
+const KIND_NAME: Record<string, string> = { video: 'Video', audio: 'Audio', book: 'Book', disc: 'Disc image', subtitle: 'Subtitles', image: 'Picture', playlist: 'Playlist', other: 'File' }
 const COUNT_NAMES: [string, string, string][] = [
   ['video', 'video', 'videos'], ['disc', 'disc image', 'disc images'], ['audio', 'audio file', 'audio files'],
   ['book', 'book', 'books'], ['folder', 'folder', 'folders'],

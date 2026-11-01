@@ -12,8 +12,7 @@
   <img alt="Read-only" src="https://img.shields.io/badge/files-read--only-success.svg">
 </p>
 
-> Read-only mirror of `modules/wittyintegratedfilebrowser` in [WittyMediaServer](https://github.com/wittywilla/WittyMediaServer),
-> where development happens. Please open issues and pull requests there.
+> WittyIntegratedFileBrowser is developed and released here. Issues and pull requests are welcome.
 
 A browser's own "choose folder" window only sees the device the browser runs on. WittyIntegratedFileBrowser
 lists the **server's** drives and folders instead, so any device can choose them. It has two halves:

@@ -1,85 +1,78 @@
-<h1 align="center">WittyIntegratedFileBrowser</h1>
+# WittyIntegratedFileBrowser
 
-<p align="center">
-  <b>Choose folders on a server from any device.</b><br>
-  A folder browser in a window, for apps whose files live on another computer: a phone, a TV or a laptop can pick a media server's folders.
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img alt="Licence: Apache-2.0" src="https://img.shields.io/badge/licence-Apache--2.0-blue.svg"></a>
-  <img alt="Go 1.26+" src="https://img.shields.io/badge/Go-1.26%2B-00ADD8.svg">
-  <img alt="React 18+" src="https://img.shields.io/badge/React-18%2B-61dafb.svg">
-  <img alt="Read-only" src="https://img.shields.io/badge/files-read--only-success.svg">
-</p>
-
-> WittyIntegratedFileBrowser is developed and released here. Issues and pull requests are welcome.
-
-A browser's own "choose folder" window only sees the device the browser runs on. WittyIntegratedFileBrowser
-lists the **server's** drives and folders instead, so any device can choose them. It has two halves:
-
-| Half | Where | Does |
-|---|---|---|
-| **Go** | this folder | lists drives (with free space), usual folders, a folder's folders and files, and what's in it |
-| **React** | [`web/`](web) | the window: places, back/forward/up, a path bar you can click or type into, filtering, sorting, several folders at once |
+Lets you choose a server's folders from any device. A browser's own folder window only sees the device it runs on, so without this a phone or a TV can't pick folders on the server, and you type the path instead.
 
 ## What it does
 
-| | |
+- **Places:** drives with their label and free space, Home, Videos, Music and the rest, plus places an app adds, such as folders already in use.
+- **Getting around:** back, forward, up, a clickable path that turns into a text box (network paths too), and recently chosen folders.
+- **Seeing what's there:** files with their kind, DVD and Blu-ray folders marked, sizes, dates, a count of what's inside, and hidden items on request. A very large folder stops at 3,000 entries unless the app sets another limit.
+- **Choosing:** the folder you're in, or tick several and use them all.
+- **Every way of using it:** keyboard (arrows, Enter, Space, Backspace, `/` to filter, Ctrl+L for the path), touch, mouse and screen readers, with a full-screen layout on phones.
+- **It only reads.** Nothing is created, renamed or deleted.
+
+The folder window in the app, and naming what kind of media each file is, stay with the server. If a version can't read a folder, the server tries it itself.
+
+How to use it is in **Help** inside WittyMediaServer: see the getting started guide.
+
+## How to get it
+
+An admin adds it from the module store inside WittyMediaServer: **Settings → Modules**, then **Browse the store**, then **Add** beside WittyIntegratedFileBrowser. That needs WittyMediaServer 0.6.0-alpha or later, and it works with nothing older. The range this version fits is in `module.json`: 0.6.0-alpha through 0.6.x.
+
+## What it needs
+
+[WittyModule](https://github.com/wittywilla/WittyModule), which is how a server talks to it, and `golang.org/x/sys`, both built in. The window in `web/` is React and uses the app's theme. It's written in Go with no cgo.
+
+If you use it in another app, put the Go half behind that app's sign-in.
+
+## Platforms
+
+A program is built for each system below, and the server uses the right one.
+
+| System | Where it stands |
 |---|---|
-| 💽 **Places** | drives with their label and free space, Home, Desktop, Videos, Music and the rest, plus places of your own (folders already in use, for example) |
-| 🧭 **Getting around** | back, forward, up, a clickable path that turns into a text box (network paths too, such as `\NAS\Media` or `/mnt/nas`), recently chosen folders |
-| 🔎 **Seeing what's there** | files with their kind (video, audio, book, disc image, subtitles, picture), DVD and Blu-ray folders marked, sizes, dates, a count of what's inside, hidden items on request |
-| ✅ **Choosing** | the folder you're in, or tick several folders and use them all |
-| ⌨️ **Every way of using it** | keyboard (arrows, Enter, Space, Backspace, `/` to filter, Ctrl+L for the path), touch, mouse and screen readers; a full-screen layout on phones |
-| 🔒 **Safe** | it only reads: nothing is created, renamed or deleted. Put the Go half behind your app's sign-in |
+| Linux (x64, arm64, 32-bit ARM, x86) | Its tests pass on x64. The other CPUs are only built |
+| Windows (x64, arm64) | Built. This version hasn't been run on Windows since it became its own program |
+| macOS (Intel, Apple silicon) | Built by the release tool. It has not been run on a real Mac |
+| FreeBSD (amd64, arm64) | Cross-compiled only. It has not been run |
 
-## Go
+On macOS and FreeBSD the server has no sandbox for a module's helper: it gets a small environment and a soft memory limit, and nothing more.
 
-```go
-import fb "github.com/wittywilla/wittyintegratedfilebrowser"
+The window is one browser bundle for every system.
 
-places := fb.Places(fb.Place{Name: "Movies", Path: `D:\Movies`, Group: "libraries"})
-l, err := fb.List(`D:\Movies`, fb.Options{ShowHidden: false})
-// l.Entries: folders first, then files; l.Counts: {"folder": 12, "video": 30, "disc": 4}
+## Building and testing
+
+You need Go 1.26 or newer. In a worktree, first run the copy of `dev-modules.mjs` kept above the repositories (`node D:/projects/dev-modules.mjs` on the development machine). It writes a `go.work` that git ignores, so the checkout builds against the repositories beside it. Never run `go work use`.
+
+```bash
+go vet ./...
 ```
 
-| Call | Does |
-|---|---|
-| `Places(extra...)` | where to start: drives (label, free and total space), the user's folders, then `extra` |
-| `List(path, Options)` | a folder's folders and files (`ErrNotFound`, `ErrDenied`) |
-| `FileKind(name)`, `DiscFolder(path)`, `IsHidden(name)` | the helpers it uses |
-
-`Options.Kind` replaces the file classifier, `MaxEntries` limits very large folders (3,000 by default).
-No cgo; its only dependency is `golang.org/x/sys`. Serve both as JSON: `List`'s result is what the window reads.
-
-## React
-
-```tsx
-import FileBrowser from '@wittywilla/wittyintegratedfilebrowser'
-
-<FileBrowser
-  list={(path, hidden) => fetch(`/api/fs?path=${encodeURIComponent(path)}&hidden=${hidden ? 1 : 0}`).then((r) => r.json())}
-  onPick={(paths) => addFolders(paths)}
-  onClose={() => setOpen(false)}
-/>
+```bash
+go test ./... -count=1
 ```
 
-`list('')` returns `{ places }`; any other path returns a `List` result. It uses your app's theme variables
-(`--bg`, `--fg`, `--accent` and the rest) and `.btn`/`.input` styles when they exist, and has its own when they don't.
+```bash
+go run github.com/wittywilla/wittymodule/cmd/wittymodule check .
+```
 
-## The Witty family
+The last one checks the manifest. On the same tool, `pack -targets linux/amd64 -out release .` builds a release for one system. CI also builds for every system.
 
-| Project | Role |
-|---|---|
-| [WittyMediaServer](https://github.com/wittywilla/WittyMediaServer) | the media server it was made for |
-| [WittyDVD](https://github.com/wittywilla/WittyDVD) · [WittyBluray](https://github.com/wittywilla/WittyBluray) · [WittyDisc](https://github.com/wittywilla/WittyDisc) | disc engines |
-| [WittyEbook](https://github.com/wittywilla/WittyEbook) · [WittyPDF](https://github.com/wittywilla/WittyPDF) · [WittyComics](https://github.com/wittywilla/WittyComics) · [WittyInk](https://github.com/wittywilla/WittyInk) | readers |
+The browser half builds with Node.js:
+
+```bash
+npm install
+```
+
+```bash
+npm run build:bundle
+```
+
+To use it in another app, `Places(extra...)` says where to start, and `List(path, Options)` gives a folder's folders and files, with `ErrNotFound` and `ErrDenied`. Serve both as JSON for the React window in `web/`, which takes `list`, `onPick` and `onClose`.
 
 ## Licence
 
-**Apache-2.0**, the same licence as WittyMediaServer. © 2026 WittyWilla and contributors.
-Use, change and share it; if you redistribute it or build on it, keep the [NOTICE](NOTICE)
-attribution, *“WittyIntegratedFileBrowser, developed by WittyWilla”*, in your NOTICE file, documentation or About screen.
+Apache-2.0: see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
 
 ## Legal
 

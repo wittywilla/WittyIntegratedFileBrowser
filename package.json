@@ -12,10 +12,19 @@
   "scripts": {
     "build:bundle": "node build-bundle.mjs"
   },
-  "files": ["web", "LICENSE", "NOTICE"],
+  "files": [
+    "web",
+    "LICENSE",
+    "NOTICE"
+  ],
   "repository": "github:wittywilla/WittyIntegratedFileBrowser",
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

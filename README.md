@@ -2,6 +2,14 @@
 
 Lets you choose a server's folders from any device. A browser's own folder window only sees the device it runs on, so without this a phone or a TV can't pick folders on the server, and you type the path instead.
 
+<!-- pictures -->
+
+![Choosing a folder on the server, in the page](docs/images/folder-browser.webp)
+
+<sub>Browsing the server's folders from the browser.</sub>
+
+<!-- /pictures -->
+
 ## What it does
 
 - **Places:** drives with their label and free space, Home, Videos, Music and the rest, plus places an app adds, such as folders already in use.

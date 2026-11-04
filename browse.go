@@ -103,7 +103,15 @@ func List(path string, o Options) (*Listing, error) {
 		}
 		full := filepath.Join(p, name)
 		e := Entry{Name: name, Path: full, Dir: de.IsDir(), Hidden: hidden}
-		if info, err := de.Info(); err == nil {
+		info, err := de.Info()
+		// A link (or a Windows junction) is shown as what it points to, as opening
+		// it does; one that points nowhere stays a file.
+		if de.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
+			if st, serr := os.Stat(full); serr == nil {
+				info, err, e.Dir = st, nil, st.IsDir()
+			}
+		}
+		if err == nil {
 			e.Modified = info.ModTime().Unix()
 			if !e.Dir {
 				e.Size = info.Size()

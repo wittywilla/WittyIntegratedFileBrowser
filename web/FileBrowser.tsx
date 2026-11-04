@@ -75,7 +75,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     setLoading(true); setErr('')
     listFolder(cur, showHidden)
       .then((d) => { if (current) { setData(d); if (!cur) setPlaces(d.places || []) } })
-      .catch((e) => { if (current) setErr(e.message) })
+      .catch((e) => { if (current) { setErr(e.message); setData(null) } }) // nothing of the folder before stays to be chosen
       .finally(() => { if (current) setLoading(false) })
     return () => { current = false }
   }, [cur, showHidden, reload, listFolder])
@@ -95,10 +95,12 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
 
   // The path as clickable pieces: "D:\ › Media › Movies".
   const crumbs = useMemo(() => {
-    if (!data?.path) return []
-    const sep = data.sep || '/'
+    // After an error, the path tried, so it's clear where that was.
+    const path = data?.path || (err ? cur : '')
+    if (!path) return []
+    const sep = data?.sep || (path.includes('\\') && !path.includes('/') ? '\\' : '/')
     const out: { name: string; path: string }[] = []
-    let p = data.path
+    let p = path
     while (p) {
       const parentIdx = p.replace(/[\\/]+$/, '').lastIndexOf(sep)
       const isRoot = parentIdx < 0 || p.length <= 3 && /^[A-Za-z]:/.test(p) || p === '/' || /^\\\\[^\\]+\\[^\\]+\\?$/.test(p)
@@ -108,7 +110,9 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
       p = /^[A-Za-z]:$/.test(up) ? up + '\\' : up
     }
     return out
-  }, [data])
+  }, [data, err, cur])
+  // Where Up goes: the listing's parent, or after an error the folder above the one tried.
+  const upTo = data ? data.parent : crumbs.length > 1 ? crumbs[crumbs.length - 2].path : null
 
   const toggle = (p: string) => setPicked((x) => (x.includes(p) ? x.filter((y) => y !== p) : multiple ? [...x, p] : [p]))
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
@@ -120,7 +124,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     else if (e.key === 'ArrowUp') { e.preventDefault(); setFocus((i) => Math.max(0, i - 1)) }
     else if (e.key === 'Enter' && rows[focus]) { e.preventDefault(); open(rows[focus]) }
     else if (e.key === ' ' && rows[focus]?.dir) { e.preventDefault(); toggle(rows[focus].path) }
-    else if ((e.key === 'Backspace' || (e.altKey && e.key === 'ArrowLeft')) && data?.parent != null) { e.preventDefault(); go(data.parent) }
+    else if ((e.key === 'Backspace' || (e.altKey && e.key === 'ArrowLeft')) && upTo != null) { e.preventDefault(); go(upTo) }
     else if (e.key === '/' || (e.ctrlKey && e.key === 'f')) { e.preventDefault(); search.current?.focus() }
     else if (e.ctrlKey && e.key === 'l') { e.preventDefault(); setTyped(data?.path || ''); setEditing(true) }
   }
@@ -144,7 +148,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
           <div className="fx-nav">
             <button type="button" className="btn sm ghost square" disabled={hist.at === 0} onClick={() => setHist((h) => ({ ...h, at: h.at - 1 }))} aria-label="Back" title="Back"><IconLeft /></button>
             <button type="button" className="btn sm ghost square" disabled={hist.at >= hist.list.length - 1} onClick={() => setHist((h) => ({ ...h, at: h.at + 1 }))} aria-label="Forward" title="Forward"><IconRight /></button>
-            <button type="button" className="btn sm ghost square" disabled={data?.parent == null && !cur} onClick={() => go(data?.parent ?? '')} aria-label="Up one folder" title="Up one folder (Backspace)"><IconUp /></button>
+            <button type="button" className="btn sm ghost square" disabled={data?.parent == null && !cur} onClick={() => go(upTo ?? '')} aria-label="Up one folder" title="Up one folder (Backspace)"><IconUp /></button>
             <button type="button" className="btn sm ghost square" onClick={() => setReload((n) => n + 1)} aria-label="Refresh" title="Refresh"><IconRefresh /></button>
           </div>
           {editing ? (
@@ -194,7 +198,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
           <div className="fx-main">
             {cur && (
               <div className="fx-tools">
-                <span className="muted fx-summary" aria-live="polite">{loading ? 'Loading…' : summary.length ? summary.join(' · ') : 'Empty folder'}{data?.truncated ? ' · showing the first 3,000' : ''}</span>
+                <span className="muted fx-summary" aria-live="polite">{loading ? 'Loading…' : err ? '' : summary.length ? summary.join(' · ') : 'Empty folder'}{data?.truncated ? ' · showing the first 3,000' : ''}</span>
                 <label className="fx-check"><input type="checkbox" checked={showFiles} onChange={(e) => setShowFiles(e.target.checked)} /> Files</label>
                 <label className="fx-check"><input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} /> Hidden</label>
                 <select className="select sm" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Sort by">
@@ -238,7 +242,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                     </div>
                   )
                 })}
-                {!loading && rows.length === 0 && <div className="fx-empty muted">{filter ? `Nothing here matches “${filter}”.` : 'No folders here. You can still use this folder.'}</div>}
+                {!loading && !err && rows.length === 0 && <div className="fx-empty muted">{filter ? `Nothing here matches “${filter}”.` : 'No folders here. You can still use this folder.'}</div>}
               </div>
             )}
           </div>

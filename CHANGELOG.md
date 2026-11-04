@@ -5,6 +5,7 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 
 ## Unreleased
 
+- After a folder can't be opened, the path bar shows where it tried, the folder before it is gone, and Use this folder can't choose it; Up and Backspace go to the folder above the one tried (#5).
 - A folder that is slow to list no longer replaces the one opened after it (#4).
 
 ## 0.2.0

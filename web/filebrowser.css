@@ -111,3 +111,20 @@
   .fx-foot { flex-wrap: wrap; }
   .fx-hint { flex-basis: 100%; }
 }
+.fx-share { display: flex; align-items: center; min-width: 0; }
+.fx-share .fx-place { flex: 1; }
+.fx-forget { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 7px; background: none; color: var(--fx-fg3); cursor: pointer; opacity: .7; }
+.fx-forget:hover, .fx-forget:focus-visible { opacity: 1; background: var(--fx-bg3); color: var(--fx-fg); }
+.fx-forget svg { width: 16px; height: 16px; fill: currentColor; }
+.fx-connect { grid-row: 1 / -1; min-height: 0; display: grid; gap: 10px; align-content: start; max-width: 560px; padding: 18px; overflow-y: auto; }
+.fx-connect h2 { margin: 0; font-size: 17px; }
+.fx-connect p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.fx-field { display: grid; gap: 5px; font-size: 13px; font-weight: 600; color: var(--fx-fg2); }
+.fx-field .input { width: 100%; font-weight: 400; }
+.fx-connect-kind { font-size: 12.5px !important; margin-top: -4px !important; }
+.fx-connect-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fx-connect-buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+@media (max-width: 760px) {
+  .fx-connect-pair { grid-template-columns: 1fr; }
+  .fx-share, .fx-share .fx-place { flex: none; }
+}

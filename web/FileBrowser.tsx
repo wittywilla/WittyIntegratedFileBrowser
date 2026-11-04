@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { IconAudio, IconBook, IconCheck, IconClose, IconDisc, IconDrive, IconFile, IconFilm, IconFolder, IconHome, IconImage, IconLeft, IconLibrary, IconRefresh, IconRight, IconSearch, IconSubs, IconUp } from './icons'
+import { IconAudio, IconBook, IconCheck, IconClose, IconDisc, IconDrive, IconFile, IconFilm, IconFolder, IconHome, IconImage, IconLeft, IconLibrary, IconPlus, IconRefresh, IconRight, IconSearch, IconShare, IconSubs, IconUp } from './icons'
+import ConnectShare from './ConnectShare'
+import type { Share, Shares } from './shares'
 import './filebrowser.css'
 
 export type Entry = { name: string; path: string; dir: boolean; kind?: string; disc?: 'dvd' | 'bluray'; size?: number; modified?: number; hidden?: boolean }
@@ -39,12 +41,15 @@ export type FileBrowserProps = {
   title?: string // default "Browse folders"
   where?: string // after the title, default "on the server"
   groupNames?: Record<string, string> // titles for the host's own place groups
+  // SMB and NFS shares the host connects to itself (see shares.ts). Without
+  // it, there is no Connect to a share.
+  shares?: Shares
 }
 
 // FileBrowser: a folder browser in a window. Read-only; it shows the
 // drives, folders and files the host lists. Pick the folder you are in, or
 // tick several folders and use them all.
-export default function FileBrowser({ list: listFolder, onPick, onClose, multiple = true, title = 'Browse folders', where = 'on the server', groupNames = { libraries: 'In your libraries' } }: FileBrowserProps) {
+export default function FileBrowser({ list: listFolder, onPick, onClose, multiple = true, title = 'Browse folders', where = 'on the server', groupNames = { libraries: 'In your libraries' }, shares }: FileBrowserProps) {
   const [hist, setHist] = useState<{ list: string[]; at: number }>({ list: [''], at: 0 })
   const cur = hist.list[hist.at]
   const [data, setData] = useState<Listing | null>(null)
@@ -60,6 +65,8 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const [editing, setEditing] = useState(false)
   const [typed, setTyped] = useState('')
   const [reload, setReload] = useState(0)
+  const [shareList, setShareList] = useState<Share[]>([])
+  const [connecting, setConnecting] = useState(false)
   const list = useRef<HTMLDivElement | null>(null)
   const search = useRef<HTMLInputElement | null>(null)
 
@@ -68,6 +75,9 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     setFilter(''); setFocus(0); setEditing(false)
   }, [])
   useEffect(() => { listFolder('', false).then((d) => setPlaces(d.places || [])).catch(() => {}) }, [listFolder])
+  const loadShares = useCallback(() => { shares?.list().then(setShareList).catch(() => setShareList([])) }, [shares])
+  useEffect(loadShares, [loadShares])
+  const forget = (s: Share) => { if (!window.confirm(`Forget ${s.name}? Connecting to it again needs its password.`)) return; shares?.forget(s.id).then(loadShares).catch((e) => setErr(e.message)) }
   useEffect(() => {
     setLoading(true); setErr('')
     listFolder(cur, showHidden)
@@ -92,8 +102,17 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   // The path as clickable pieces: "D:\ › Media › Movies".
   const crumbs = useMemo(() => {
     if (!data?.path) return []
-    const sep = data.sep || '/'
     const out: { name: string; path: string }[] = []
+    // On a network share, the share itself is the first piece, by its name.
+    const share = /^(smb|nfs):\/\//i.test(data.path) ? shareList.find((s) => data.path === s.path || data.path.startsWith(s.path.replace(/\/+$/, '') + '/')) : undefined
+    const shareRoot = share?.path.replace(/\/+$/, '') ?? /^smb:\/\/[^/]+\/[^/]+/i.exec(data.path)?.[0]
+    if (shareRoot) {
+      out.push({ name: share?.name ?? shareRoot, path: shareRoot })
+      let at = shareRoot
+      for (const part of data.path.slice(shareRoot.length).split('/').filter(Boolean)) out.push({ name: part, path: (at += '/' + part) })
+      return out
+    }
+    const sep = data.sep || '/'
     let p = data.path
     while (p) {
       const parentIdx = p.replace(/[\\/]+$/, '').lastIndexOf(sep)
@@ -104,7 +123,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
       p = /^[A-Za-z]:$/.test(up) ? up + '\\' : up
     }
     return out
-  }, [data])
+  }, [data, shareList])
 
   const toggle = (p: string) => setPicked((x) => (x.includes(p) ? x.filter((y) => y !== p) : multiple ? [...x, p] : [p]))
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
@@ -184,6 +203,20 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                 </div>
               )
             })}
+            {shares && (
+              <div className="fx-group">
+                <div className="fx-group-title">Network shares</div>
+                {shareList.map((s) => (
+                  <div key={s.id} className="fx-share">
+                    <button type="button" className={'fx-place' + (data?.path === s.path ? ' on' : '')} onClick={() => { setConnecting(false); go(s.path) }} title={s.path}>
+                      <IconShare /><span className="fx-place-txt"><span>{s.name}</span><span className="muted">{s.kind === 'smb' ? 'SMB' : 'NFS'}</span></span>
+                    </button>
+                    <button type="button" className="fx-forget" onClick={() => forget(s)} aria-label={`Forget ${s.name}`} title="Forget this share"><IconClose /></button>
+                  </div>
+                ))}
+                <button type="button" className={'fx-place' + (connecting ? ' on' : '')} onClick={() => setConnecting(true)} aria-pressed={connecting}><IconPlus /><span className="fx-place-txt"><span>Connect to a share</span></span></button>
+              </div>
+            )}
             {recent.length > 0 && (
               <div className="fx-group">
                 <div className="fx-group-title">Recently chosen</div>
@@ -193,6 +226,10 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
           </nav>
 
           <div className="fx-main">
+            {connecting && shares ? (
+              <ConnectShare shares={shares} onCancel={() => setConnecting(false)}
+                onConnected={(s) => { setConnecting(false); loadShares(); go(s.path) }} />
+            ) : <>
             {cur && (
               <div className="fx-tools">
                 <span className="muted fx-summary" aria-live="polite">{loading ? 'Loading…' : summary.length ? summary.join(' · ') : 'Empty folder'}{data?.truncated ? ' · showing the first 3,000' : ''}</span>
@@ -206,7 +243,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
             {err && <div className="error" role="alert">{err}</div>}
             {!cur ? (
               <div className="fx-start">
-                <p className="muted">Pick a drive or folder on the left, or click the path bar and type one. Network folders work too, if the server can reach them (for example <code>\\NAS\Media</code> or <code>/mnt/nas</code>).</p>
+                <p className="muted">Pick a drive or folder on the left, or click the path bar and type one. Network folders work too, if the server can reach them (for example <code>\\NAS\Media</code> or <code>/mnt/nas</code>){shares ? <>, or use <b>Connect to a share</b> to reach one with nothing set up on this server</> : null}.</p>
                 <div className="fx-tiles">
                   {places.filter((p) => p.group === 'drives').map((p) => (
                     <button type="button" key={p.path} className="fx-tile" onClick={() => go(p.path)}>
@@ -242,6 +279,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                 {!loading && rows.length === 0 && <div className="fx-empty muted">{filter ? `Nothing here matches “${filter}”.` : 'No folders here. You can still use this folder.'}</div>}
               </div>
             )}
+            </>}
           </div>
         </div>
 

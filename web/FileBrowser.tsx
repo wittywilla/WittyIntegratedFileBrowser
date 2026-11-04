@@ -61,6 +61,13 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const [typed, setTyped] = useState('')
   const [reload, setReload] = useState(0)
   const list = useRef<HTMLDivElement | null>(null)
+  const dialog = useRef<HTMLDivElement | null>(null)
+  // Like any dialog: focus goes in when it opens, and back where it was when it closes.
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null
+    dialog.current?.focus()
+    return () => { if (back?.isConnected) back.focus() }
+  }, [])
   const search = useRef<HTMLInputElement | null>(null)
 
   const go = useCallback((p: string) => {
@@ -110,6 +117,15 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
   const open = (e: Entry) => { if (e.dir) go(e.path) }
   const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab' && dialog.current) {
+      // Tab and Shift+Tab go round the window, not out to the page behind it.
+      const all = [...dialog.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex="0"]')].filter((el) => el.getClientRects().length)
+      const at = document.activeElement
+      if (!all.length) return
+      if (e.shiftKey && (at === all[0] || at === dialog.current)) { e.preventDefault(); all[all.length - 1].focus() }
+      else if (!e.shiftKey && at === all[all.length - 1]) { e.preventDefault(); all[0].focus() }
+      return
+    }
     if (editing || (e.target as HTMLElement).tagName === 'INPUT') return
     const n = rows.length
     if (e.key === 'ArrowDown') { e.preventDefault(); setFocus((i) => Math.min(n - 1, i + 1)) }
@@ -130,7 +146,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
 
   return createPortal(
     <div className="modal-backdrop fx-backdrop" onClick={onClose}>
-      <div className="fx" role="dialog" aria-modal="true" aria-labelledby="fx-title" onClick={(e) => e.stopPropagation()} onKeyDown={onKey}>
+      <div className="fx" ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fx-title" onClick={(e) => e.stopPropagation()} onKeyDown={onKey}>
         <header className="fx-head">
           <div className="fx-title"><b id="fx-title">{title}</b>{where && <span className="muted">{where}</span>}</div>
           <button type="button" className="btn sm ghost square" onClick={onClose} aria-label="Close"><IconClose /></button>

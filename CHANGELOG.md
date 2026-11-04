@@ -5,6 +5,10 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 
 ## Unreleased
 
+- The folder window takes keyboard focus when it opens, keeps Tab inside it, and gives focus back when it closes (#8).
+
+## 0.2.0
+
 - Module API 3 and WittyMediaServer 0.6.0-alpha: this is how a server gets it now, with no copy compiled in.
 - Knows many more file types when it runs on its own, and playlists have a name and an icon.
 - WittyIntegratedFileBrowser is now a project of its own, developed and released from this repository.

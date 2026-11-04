@@ -21,6 +21,7 @@
 :where(.fx) :where(.error) { padding: 8px 14px; }
 .fx { width: min(1040px, calc(100vw - 24px)); height: min(720px, calc(100vh - 32px)); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto;
   background: var(--fx-bg2); border: 1px solid var(--fx-border); border-radius: 18px; box-shadow: var(--shadow, 0 24px 60px rgba(0,0,0,.5)); overflow: hidden; text-align: left; animation: fx-in .2s cubic-bezier(.2,.8,.2,1); }
+.fx:focus { outline: none; }
 @keyframes fx-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
 @media (prefers-reduced-motion: reduce) { .fx { animation: none; } }
 .fx-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }

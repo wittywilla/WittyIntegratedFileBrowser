@@ -109,13 +109,18 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const toggle = (p: string) => setPicked((x) => (x.includes(p) ? x.filter((y) => y !== p) : multiple ? [...x, p] : [p]))
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
   const open = (e: Entry) => { if (e.dir) go(e.path) }
+  // The window's keys. Text boxes and the sort menu keep theirs, and the arrows,
+  // Enter and Space work the list only while it has focus, so buttons and links
+  // still press with them.
   const onKey = (e: React.KeyboardEvent) => {
-    if (editing || (e.target as HTMLElement).tagName === 'INPUT') return
+    const t = e.target as HTMLElement
+    if (editing || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return
+    const inList = t === list.current
     const n = rows.length
-    if (e.key === 'ArrowDown') { e.preventDefault(); setFocus((i) => Math.min(n - 1, i + 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocus((i) => Math.max(0, i - 1)) }
-    else if (e.key === 'Enter' && rows[focus]) { e.preventDefault(); open(rows[focus]) }
-    else if (e.key === ' ' && rows[focus]?.dir) { e.preventDefault(); toggle(rows[focus].path) }
+    if (inList && e.key === 'ArrowDown') { e.preventDefault(); setFocus((i) => Math.max(0, Math.min(n - 1, i + 1))) }
+    else if (inList && e.key === 'ArrowUp') { e.preventDefault(); setFocus((i) => Math.max(0, i - 1)) }
+    else if (inList && e.key === 'Enter' && rows[focus]) { e.preventDefault(); open(rows[focus]) }
+    else if (inList && e.key === ' ' && rows[focus]?.dir) { e.preventDefault(); toggle(rows[focus].path) }
     else if ((e.key === 'Backspace' || (e.altKey && e.key === 'ArrowLeft')) && data?.parent != null) { e.preventDefault(); go(data.parent) }
     else if (e.key === '/' || (e.ctrlKey && e.key === 'f')) { e.preventDefault(); search.current?.focus() }
     else if (e.ctrlKey && e.key === 'l') { e.preventDefault(); setTyped(data?.path || ''); setEditing(true) }

@@ -14,6 +14,7 @@ Lets you choose a server's folders from any device. A browser's own folder windo
 
 - **Places:** drives with their label and free space, Home, Videos, Music and the rest, plus places an app adds, such as folders already in use.
 - **Getting around:** back, forward, up, a clickable path that turns into a text box (network paths too), and recently chosen folders.
+- **Network shares:** when the app can connect to SMB and NFS shares itself, **Connect to a share** takes `\nasMedia`, `smb://nas/Media` or `nas:/volume1/media` and, for SMB, a user name and password, with nothing mounted or installed on the server. WittyMediaServer's half is [wittywilla/WittyMediaServer#172](https://github.com/wittywilla/WittyMediaServer/issues/172).
 - **Seeing what's there:** files with their kind, DVD and Blu-ray folders marked, sizes, dates, a count of what's inside, and hidden items on request. A very large folder stops at 3,000 entries unless the app sets another limit.
 - **Choosing:** the folder you're in, or tick several and use them all.
 - **Every way of using it:** keyboard (arrows, Enter, Space, Backspace, `/` to filter, Ctrl+L for the path), touch, mouse and screen readers, with a full-screen layout on phones.
@@ -77,7 +78,7 @@ npm install
 npm run build:bundle
 ```
 
-To use it in another app, `Places(extra...)` says where to start, and `List(path, Options)` gives a folder's folders and files, with `ErrNotFound` and `ErrDenied`. Serve both as JSON for the React window in `web/`, which takes `list`, `onPick` and `onClose`. When a folder can't be read, `Explain(path)` (the helper's `access` call) says why in a container, or nil; send it as `access` beside the listing, or in the error's data, and the window shows it. The checks that need a container and another user are in [docs/TESTING.md](docs/TESTING.md).
+To use it in another app, `Places(extra...)` says where to start, and `List(path, Options)` gives a folder's folders and files, with `ErrNotFound` and `ErrDenied`. Serve both as JSON for the React window in `web/`, which takes `list`, `onPick` and `onClose`. When a folder can't be read, `Explain(path)` (the helper's `access` call) says why in a container, or nil; send it as `access` beside the listing, or in the error's data, and the window shows it. The checks that need a container and another user are in [docs/TESTING.md](docs/TESTING.md). To offer network shares, also pass `shares` with `list`, `connect` and `forget` (`web/shares.ts`): the app connects, keeps the password encrypted and never sends it back. The window only hands it to `connect`, and the module's helper never reaches the network.
 
 ## Licence
 

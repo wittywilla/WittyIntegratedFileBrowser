@@ -10,7 +10,8 @@
     ".": "./web/index.ts"
   },
   "scripts": {
-    "build:bundle": "node build-bundle.mjs"
+    "build:bundle": "node build-bundle.mjs",
+    "test": "node --experimental-strip-types --test web/shares.test.ts"
   },
   "files": [
     "web",

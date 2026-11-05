@@ -111,6 +111,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const [reload, setReload] = useState(0)
   const list = useRef<HTMLDivElement | null>(null)
   const search = useRef<HTMLInputElement | null>(null)
+  const pathBar = useRef<HTMLDivElement | null>(null)
 
   const go = useCallback((p: string) => {
     setHist((h) => (h.list[h.at] === p ? h : { list: [...h.list.slice(0, h.at + 1), p], at: h.at + 1 }))
@@ -158,6 +159,8 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     }
     return out
   }, [data])
+  // A long path shows its end, the folder you're in; it scrolls back to the start.
+  useEffect(() => { const b = pathBar.current; if (b) b.scrollLeft = b.scrollWidth }, [crumbs, editing])
 
   const toggle = (p: string) => setPicked((x) => (x.includes(p) ? x.filter((y) => y !== p) : multiple ? [...x, p] : [p]))
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
@@ -208,7 +211,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                 placeholder="Type a folder, e.g. D:\Movies, /mnt/media or \\NAS\Media" aria-label="Folder path" spellCheck={false} />
             </form>
           ) : (
-            <div className="fx-path" onClick={(e) => { if (e.target === e.currentTarget) { setTyped(data?.path || ''); setEditing(true) } }} title="Click to type a path (Ctrl+L)">
+            <div className="fx-path" ref={pathBar} onClick={(e) => { if (e.target === e.currentTarget) { setTyped(data?.path || ''); setEditing(true) } }} title="Click to type a path (Ctrl+L)">
               <button type="button" className="fx-crumb" onClick={() => go('')}><IconHome /> <span>This server</span></button>
               {crumbs.map((c) => <span key={c.path} className="fx-crumb-wrap"><span className="fx-sep">›</span><button type="button" className="fx-crumb" onClick={() => go(c.path)}>{c.name}</button></span>)}
             </div>

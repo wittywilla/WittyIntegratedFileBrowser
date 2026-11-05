@@ -41,6 +41,13 @@ func handle(method string, params json.RawMessage) (any, []byte, error) {
 			return nil, nil, err
 		}
 		return nil, b, nil
+	case "access":
+		// Why a folder can't be read, for a host to ask after "denied" or an empty
+		// listing. null outside a container and when there's nothing to say.
+		if p.Path == "" {
+			return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: "no path was given"}
+		}
+		return wittyintegratedfilebrowser.Explain(p.Path), nil, nil
 	}
 	return nil, nil, &wittymodule.CallError{Code: "unknown-method", Message: fmt.Sprintf("this version has no %q", method)}
 }

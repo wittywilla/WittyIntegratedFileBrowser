@@ -55,7 +55,16 @@
 .fx-place-txt .muted { font-size: 11.5px; }
 .fx-usage { display: block; height: 4px; border-radius: 2px; background: var(--fx-bg4); overflow: hidden; }
 .fx-usage i { display: block; height: 100%; background: var(--fx-accent); border-radius: 2px; }
-.fx-main { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; min-width: 0; }
+.fx-main { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.fx-main > .fx-list, .fx-main > .fx-start { flex: 1; min-height: 0; }
+.fx-note { margin: 10px 14px 4px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--fx-border); border-left: 4px solid var(--fx-accent); background: var(--fx-bg); color: var(--fx-fg2); font-size: 13.5px; line-height: 1.5; }
+.fx-note > b { display: block; color: var(--fx-fg); font-size: 14px; }
+.fx-note p { margin: 4px 0 0; }
+.fx-note code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; padding: 1px 5px; border-radius: 5px; background: var(--fx-bg3); color: var(--fx-fg); }
+.fx-note-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.fx-note a { color: var(--fx-accent); text-underline-offset: 2px; }
+.fx-note-links > a:first-child { font-weight: 700; margin-right: 6px; }
+.fx-note a:focus-visible { outline: 2px solid var(--fx-accent); outline-offset: 2px; border-radius: 3px; }
 .fx-tools { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-bottom: 1px solid var(--fx-border); flex-wrap: wrap; }
 .fx-summary { margin-right: auto; font-size: 13px; }
 .fx-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--fx-fg2); cursor: pointer; }

@@ -117,12 +117,16 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     setFilter(''); setFocus(0); setEditing(false)
   }, [])
   useEffect(() => { listFolder('', false).then((d) => setPlaces(d.places || [])).catch(() => {}) }, [listFolder])
+  // A slow folder (a network share, a disk waking up) can answer after someone
+  // has moved on; only the answer for the folder being looked at is used.
   useEffect(() => {
+    let current = true
     setLoading(true); setErr(''); setNote(null)
     listFolder(cur, showHidden)
-      .then((d) => { setData(d); setNote(asNote(d.access)); if (!cur) setPlaces(d.places || []) })
-      .catch((e) => { setErr(e.message); setNote(asNote(e?.data?.access)) })
-      .finally(() => setLoading(false))
+      .then((d) => { if (current) { setData(d); setNote(asNote(d.access)); if (!cur) setPlaces(d.places || []) } })
+      .catch((e) => { if (current) { setErr(e.message); setNote(asNote(e?.data?.access)) } })
+      .finally(() => { if (current) setLoading(false) })
+    return () => { current = false }
   }, [cur, showHidden, reload, listFolder])
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !editing) onClose() }

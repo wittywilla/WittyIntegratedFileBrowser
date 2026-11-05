@@ -95,13 +95,22 @@ func List(path string, o Options) (*Listing, error) {
 	}
 	l := &Listing{Path: p, Sep: string(filepath.Separator), Entries: []Entry{}, Counts: map[string]int{}}
 	// Folders first, each by name, and only then the limit, so folders are never
-	// left out for files. Only what is shown is looked at more closely.
+	// left out for files. Only what is shown is looked at more closely. A link (or a Windows junction) is what it points to, as opening it is; one
+	// that points nowhere stays a file.
+	isLink := func(de fs.DirEntry) bool { return de.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0 }
+	isDir := func(de fs.DirEntry) bool {
+		if isLink(de) {
+			st, err := os.Stat(filepath.Join(p, de.Name()))
+			return err == nil && st.IsDir()
+		}
+		return de.IsDir()
+	}
 	var dirs, files []fs.DirEntry
 	for _, de := range des {
 		if IsHidden(de.Name()) && !o.ShowHidden {
 			continue
 		}
-		if de.IsDir() {
+		if isDir(de) {
 			dirs = append(dirs, de)
 		} else {
 			files = append(files, de)
@@ -118,11 +127,17 @@ func List(path string, o Options) (*Listing, error) {
 	if room := max - len(dirs); len(files) > room {
 		files, l.Truncated = files[:room], true
 	}
-	for _, de := range append(dirs, files...) {
+	for i, de := range append(dirs, files...) {
 		name := de.Name()
 		full := filepath.Join(p, name)
-		e := Entry{Name: name, Path: full, Dir: de.IsDir(), Hidden: IsHidden(name)}
-		if info, err := de.Info(); err == nil {
+		e := Entry{Name: name, Path: full, Dir: i < len(dirs), Hidden: IsHidden(name)}
+		info, err := de.Info()
+		if isLink(de) {
+			if st, serr := os.Stat(full); serr == nil {
+				info, err = st, nil
+			}
+		}
+		if err == nil {
 			e.Modified = info.ModTime().Unix()
 			if !e.Dir {
 				e.Size = info.Size()

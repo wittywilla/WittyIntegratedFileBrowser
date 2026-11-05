@@ -94,24 +94,47 @@ func List(path string, o Options) (*Listing, error) {
 		kind = FileKind
 	}
 	l := &Listing{Path: p, Sep: string(filepath.Separator), Entries: []Entry{}, Counts: map[string]int{}}
+	// Folders first, each by name, and only then the limit, so folders are never
+	// left out for files. Only what is shown is looked at more closely. A link (or a Windows junction) is what it points to, as opening it is; one
+	// that points nowhere stays a file.
+	isLink := func(de fs.DirEntry) bool { return de.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0 }
+	isDir := func(de fs.DirEntry) bool {
+		if isLink(de) {
+			st, err := os.Stat(filepath.Join(p, de.Name()))
+			return err == nil && st.IsDir()
+		}
+		return de.IsDir()
+	}
+	var dirs, files []fs.DirEntry
 	for _, de := range des {
-		name := de.Name()
-		hidden := IsHidden(name)
-		if hidden && !o.ShowHidden {
+		if IsHidden(de.Name()) && !o.ShowHidden {
 			continue
 		}
-		if len(l.Entries) >= max {
-			l.Truncated = true
-			break
+		if isDir(de) {
+			dirs = append(dirs, de)
+		} else {
+			files = append(files, de)
 		}
+	}
+	byName := func(s []fs.DirEntry) {
+		sort.SliceStable(s, func(i, j int) bool { return strings.ToLower(s[i].Name()) < strings.ToLower(s[j].Name()) })
+	}
+	byName(dirs)
+	byName(files)
+	if len(dirs) > max {
+		dirs, l.Truncated = dirs[:max], true
+	}
+	if room := max - len(dirs); len(files) > room {
+		files, l.Truncated = files[:room], true
+	}
+	for i, de := range append(dirs, files...) {
+		name := de.Name()
 		full := filepath.Join(p, name)
-		e := Entry{Name: name, Path: full, Dir: de.IsDir(), Hidden: hidden}
+		e := Entry{Name: name, Path: full, Dir: i < len(dirs), Hidden: IsHidden(name)}
 		info, err := de.Info()
-		// A link (or a Windows junction) is shown as what it points to, as opening
-		// it does; one that points nowhere stays a file.
-		if de.Type()&(fs.ModeSymlink|fs.ModeIrregular) != 0 {
+		if isLink(de) {
 			if st, serr := os.Stat(full); serr == nil {
-				info, err, e.Dir = st, nil, st.IsDir()
+				info, err = st, nil
 			}
 		}
 		if err == nil {
@@ -129,13 +152,6 @@ func List(path string, o Options) (*Listing, error) {
 		}
 		l.Entries = append(l.Entries, e)
 	}
-	sort.SliceStable(l.Entries, func(i, j int) bool {
-		a, b := l.Entries[i], l.Entries[j]
-		if a.Dir != b.Dir {
-			return a.Dir
-		}
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-	})
 	if d := filepath.Dir(p); d != p {
 		l.Parent = &d
 	}

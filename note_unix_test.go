@@ -41,7 +41,7 @@ func TestExplainDenied(t *testing.T) {
 	}
 	inContainer(t, true)
 	n := Explain(dir)
-	if n == nil || n.Why != "denied" || n.Folder != dir || n.UID != os.Getuid() || n.GID != os.Getgid() || n.OwnerUID != os.Getuid() {
+	if n == nil || n.Why != "denied" || n.Folder != dir || n.UID != os.Geteuid() || n.GID != os.Getegid() || n.OwnerUID != os.Geteuid() {
 		t.Fatalf("a folder that can't be opened: %+v", n)
 	}
 	// One inside it can't even be seen: the folder in the way is the one above.
@@ -59,7 +59,8 @@ func TestExplainEmptyMount(t *testing.T) {
 	mount := filepath.Join(root, "nas media")
 	full := filepath.Join(root, "full")
 	plain := filepath.Join(root, "plain")
-	for _, d := range []string{mount, full, plain} {
+	scratch := filepath.Join(root, "scratch")
+	for _, d := range []string{mount, full, plain, scratch} {
 		if err := os.Mkdir(d, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -68,10 +69,16 @@ func TestExplainEmptyMount(t *testing.T) {
 		t.Fatal(err)
 	}
 	table := filepath.Join(root, "mountinfo")
-	esc := func(p string) string { return strings.ReplaceAll(p, " ", `\040`) }
+	esc := func(p string) string { // as the table writes them: links resolved, spaces escaped
+		if r, err := filepath.EvalSymlinks(p); err == nil {
+			p = r
+		}
+		return strings.ReplaceAll(p, " ", `\040`)
+	}
 	lines := "22 1 0:21 / / rw - overlay overlay rw\n" +
 		"40 22 8:1 /srv/media " + esc(mount) + " rw,relatime - ext4 /dev/sda1 rw\n" +
-		"41 22 8:1 /srv/full " + esc(full) + " rw,relatime - ext4 /dev/sda1 rw\n"
+		"41 22 8:1 /srv/full " + esc(full) + " rw,relatime - ext4 /dev/sda1 rw\n" +
+		"42 22 0:50 / " + esc(scratch) + " rw,nosuid shared:7 - tmpfs tmpfs rw\n"
 	if err := os.WriteFile(table, []byte(lines), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -84,11 +91,14 @@ func TestExplainEmptyMount(t *testing.T) {
 		t.Errorf("outside a container: %+v, want nothing", n)
 	}
 	inContainer(t, true)
-	if n := Explain(mount); n == nil || n.Why != "empty-mount" || n.Folder != mount || n.OwnerUID != os.Getuid() {
+	if n := Explain(mount); n == nil || n.Why != "empty-mount" || n.Folder != mount || n.OwnerUID != os.Geteuid() {
 		t.Errorf("an empty mount point: %+v", n)
 	}
 	if n := Explain(full); n != nil {
 		t.Errorf("a mount point with something in it: %+v, want nothing", n)
+	}
+	if n := Explain(scratch); n != nil {
+		t.Errorf("an empty tmpfs, empty by design: %+v, want nothing", n)
 	}
 	if n := Explain(plain); n != nil {
 		t.Errorf("an empty folder that isn't a mount point: %+v, want nothing", n)
@@ -116,7 +126,7 @@ func TestExplainInDocker(t *testing.T) {
 			t.Errorf("List of another user's folder: %v, want ErrDenied", err)
 		}
 		n := Explain(foreign)
-		if n == nil || n.Why != "denied" || n.UID != os.Getuid() || n.OwnerUID == os.Getuid() {
+		if n == nil || n.Why != "denied" || n.UID != os.Geteuid() || n.OwnerUID == os.Geteuid() {
 			t.Errorf("another user's folder: %+v", n)
 		}
 		t.Logf("denied: runs as %d:%d, folder belongs to %d:%d", n.UID, n.GID, n.OwnerUID, n.OwnerGID)
@@ -128,6 +138,11 @@ func TestExplainInDocker(t *testing.T) {
 		n := Explain(empty)
 		if n == nil || n.Why != "empty-mount" {
 			t.Errorf("an empty mount: %+v", n)
+		}
+	}
+	if scratch := os.Getenv("WIFB_TEST_TMPFS"); scratch != "" {
+		if n := Explain(scratch); n != nil {
+			t.Errorf("an empty tmpfs, empty by design: %+v, want nothing", n)
 		}
 	}
 }

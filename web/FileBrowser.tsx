@@ -42,16 +42,22 @@ const ids = (u: number, g: number) => `${u}:${g}`
 // asNote keeps a note only if it is one, as it comes from the host.
 const asNote = (n: unknown): Note | null => {
   const v = n as Note | null | undefined
-  return v && (v.why === 'denied' || v.why === 'empty-mount') && typeof v.folder === 'string' && [v.uid, v.gid, v.ownerUid, v.ownerGid].every(Number.isInteger) ? v : null
+  return v && (v.why === 'denied' || v.why === 'empty-mount') && typeof v.folder === 'string' && v.folder !== '' &&
+    [v.uid, v.gid, v.ownerUid, v.ownerGid].every(Number.isInteger) && (v.groups == null || (Array.isArray(v.groups) && v.groups.every(Number.isInteger))) ? v : null
 }
+// The same folder however it's spelled at the end: "/media/nas/" is "/media/nas".
+const samePath = (a: string, b: string) => a.replace(/(.)[\\/]+$/, '$1') === b.replace(/(.)[\\/]+$/, '$1')
 
 // DockerNote says the container's user and group may not match the folder's
 // owner, with the numbers to compare and where to read how to fix it.
 function DockerNote({ note, current, guide }: { note: Note; current?: string; guide: string }) {
   const runs = ids(note.uid, note.gid), owner = ids(note.ownerUid, note.ownerGid)
   const name = note.folder.split(/[\\/]/).filter(Boolean).pop() || note.folder
-  const above = !!current && note.folder !== current
+  const above = !!current && !samePath(note.folder, current)
   const sameUser = note.uid === note.ownerUid
+  // In the folder's group already: then the group's permissions are what's missing.
+  const sameGroup = note.gid === note.ownerGid || !!note.groups?.includes(note.ownerGid)
+  const what = above ? <><b>{name}</b>, a folder above this one,</> : 'this folder'
   return (
     <section className="fx-note" aria-labelledby="fx-note-title">
       <b id="fx-note-title">{note.why === 'empty-mount' ? 'This folder may only look empty' : "The container's user and group may be wrong"}</b>
@@ -59,8 +65,10 @@ function DockerNote({ note, current, guide }: { note: Note; current?: string; gu
         <p>The server runs in a container as user and group <code>{runs}</code>, and sees nothing in this folder, which belongs to <code>{owner}</code>. If it has files on the NAS, the container may not be allowed to see them, or the drive was mounted after the container started (restarting the container picks it up).</p>
       ) : sameUser ? (
         <p>The server runs in a container as user and group <code>{runs}</code>, and owns {above ? <><b>{name}</b>, a folder above this one</> : 'this folder'}, but the folder's permissions don't let it in.</p>
+      ) : sameGroup ? (
+        <p>The server runs in a container as user and group <code>{runs}</code>, and is in the group of {what}{above ? '' : ','} which belongs to <code>{owner}</code>, but the folder doesn't let its group in. Let the group read it on the NAS, or run the container as its owner.</p>
       ) : (
-        <p>The server runs in a container as user and group <code>{runs}</code>, but {above ? <><b>{name}</b>, a folder above this one,</> : 'this folder'} belongs to <code>{owner}</code>, so it isn't allowed in.</p>
+        <p>The server runs in a container as user and group <code>{runs}</code>, but {what} belongs to <code>{owner}</code>, so it isn't allowed in.</p>
       )}
       <p className="fx-note-links">
         <a href={`${guide}#user-and-group-ids`} target="_blank" rel="noreferrer">How to fix it</a>

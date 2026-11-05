@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { IconAudio, IconBook, IconCheck, IconClose, IconDisc, IconDrive, IconFile, IconFilm, IconFolder, IconHome, IconImage, IconLeft, IconLibrary, IconRefresh, IconRight, IconSearch, IconSubs, IconUp } from './icons'
 import './filebrowser.css'
@@ -27,6 +27,8 @@ const fmtSize = (b?: number) => {
   while (n >= 1024 && i < u.length - 1) { n /= 1024; i++ }
   return `${n >= 10 || i === 0 ? Math.round(n) : n.toFixed(1)} ${u[i]}`
 }
+// What a screen reader says for a row: its name and what it is.
+const rowLabel = (e: Entry) => `${e.name}, ${e.dir ? (e.disc ? `${e.disc === 'dvd' ? 'DVD' : 'Blu-ray'} folder` : 'folder') : (KIND_NAME[e.kind || 'other'] || 'File').toLowerCase()}${!e.dir && e.size != null ? `, ${fmtSize(e.size)}` : ''}`
 const fmtDate = (t?: number) => (t ? new Date(t * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '')
 
 // The guides to fixing a container's user and group, by where it runs. Plain
@@ -118,6 +120,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     return () => { if (back?.isConnected) back.focus() }
   }, [])
   const search = useRef<HTMLInputElement | null>(null)
+  const uid = useId()
   const pathBar = useRef<HTMLDivElement | null>(null)
 
   const go = useCallback((p: string) => {
@@ -294,12 +297,13 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                 </div>
               </div>
             ) : (
-              <div className="fx-list" ref={list} role="listbox" aria-multiselectable={multiple} tabIndex={0} aria-label="Folders and files">
+              <div className="fx-list" ref={list} role="listbox" aria-multiselectable={multiple} tabIndex={0} aria-label="Folders and files"
+                aria-activedescendant={rows[focus] ? `${uid}-row-${focus}` : undefined}>
                 <div className="fx-row fx-row-head" aria-hidden="true"><span /><span>Name</span><span>Modified</span><span>Size</span></div>
                 {rows.map((e, i) => {
                   const on = picked.includes(e.path)
                   return (
-                    <div key={e.path} data-i={i} role="option" aria-selected={on} className={'fx-row' + (e.dir ? ' dir' : ' file') + (i === focus ? ' focus' : '') + (on ? ' picked' : '') + (e.hidden ? ' hidden' : '')}
+                    <div key={e.path} id={`${uid}-row-${i}`} data-i={i} role="option" aria-selected={on} aria-label={rowLabel(e)} className={'fx-row' + (e.dir ? ' dir' : ' file') + (i === focus ? ' focus' : '') + (on ? ' picked' : '') + (e.hidden ? ' hidden' : '')}
                       onClick={() => { setFocus(i); if (e.dir) toggle(e.path) }} onDoubleClick={() => open(e)}>
                       <span className="fx-ic">
                         {e.dir

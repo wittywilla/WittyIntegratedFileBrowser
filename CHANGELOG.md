@@ -6,6 +6,7 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 ## Unreleased
 
 - After a folder can't be opened, the path bar shows where it tried, the folder before it is gone, and Use this folder can't choose it; Up and Backspace go to the folder above the one tried (#5).
+- A folder reached through a link (or a Windows junction) is a folder that opens, and a link to a file has the file's size (#10).
 - The folder window takes keyboard focus when it opens, keeps Tab inside it, and gives focus back when it closes (#8).
 - On a long path, the path bar shows its end, the folder you're in, and scrolls back to the start (#6).
 - In a folder with more than 3,000 things, folders are no longer left out: they come first, and files fill what's left (#9).

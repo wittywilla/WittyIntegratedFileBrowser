@@ -94,18 +94,34 @@ func List(path string, o Options) (*Listing, error) {
 		kind = FileKind
 	}
 	l := &Listing{Path: p, Sep: string(filepath.Separator), Entries: []Entry{}, Counts: map[string]int{}}
+	// Folders first, each by name, and only then the limit, so folders are never
+	// left out for files. Only what is shown is looked at more closely.
+	var dirs, files []fs.DirEntry
 	for _, de := range des {
-		name := de.Name()
-		hidden := IsHidden(name)
-		if hidden && !o.ShowHidden {
+		if IsHidden(de.Name()) && !o.ShowHidden {
 			continue
 		}
-		if len(l.Entries) >= max {
-			l.Truncated = true
-			break
+		if de.IsDir() {
+			dirs = append(dirs, de)
+		} else {
+			files = append(files, de)
 		}
+	}
+	byName := func(s []fs.DirEntry) {
+		sort.SliceStable(s, func(i, j int) bool { return strings.ToLower(s[i].Name()) < strings.ToLower(s[j].Name()) })
+	}
+	byName(dirs)
+	byName(files)
+	if len(dirs) > max {
+		dirs, l.Truncated = dirs[:max], true
+	}
+	if room := max - len(dirs); len(files) > room {
+		files, l.Truncated = files[:room], true
+	}
+	for _, de := range append(dirs, files...) {
+		name := de.Name()
 		full := filepath.Join(p, name)
-		e := Entry{Name: name, Path: full, Dir: de.IsDir(), Hidden: hidden}
+		e := Entry{Name: name, Path: full, Dir: de.IsDir(), Hidden: IsHidden(name)}
 		if info, err := de.Info(); err == nil {
 			e.Modified = info.ModTime().Unix()
 			if !e.Dir {
@@ -121,13 +137,6 @@ func List(path string, o Options) (*Listing, error) {
 		}
 		l.Entries = append(l.Entries, e)
 	}
-	sort.SliceStable(l.Entries, func(i, j int) bool {
-		a, b := l.Entries[i], l.Entries[j]
-		if a.Dir != b.Dir {
-			return a.Dir
-		}
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-	})
 	if d := filepath.Dir(p); d != p {
 		l.Parent = &d
 	}

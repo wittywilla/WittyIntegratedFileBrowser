@@ -69,6 +69,9 @@ func List(path string, o Options) (*Listing, error) {
 		p += `\`
 	}
 	st, err := os.Stat(p)
+	if errors.Is(err, fs.ErrPermission) {
+		return nil, ErrDenied // a folder above it can't be gone through
+	}
 	if err != nil {
 		return nil, ErrNotFound
 	}

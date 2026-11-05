@@ -5,6 +5,7 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 
 ## Unreleased
 
+- In a container (Docker and the like), a folder the server can't open, or a mount point that looks empty, says which user and group the server runs as, who owns the folder, and links to the fix for each kind of NAS. The helper answers a new `access` call for hosts to ask (#2).
 - Enter and Space press the folder window's buttons and links, and the sort menu works with the keyboard; the arrows, Enter and Space work the list only while it has focus (#3).
 
 ## 0.2.0

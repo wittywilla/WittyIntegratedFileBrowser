@@ -5,7 +5,11 @@ import './filebrowser.css'
 
 export type Entry = { name: string; path: string; dir: boolean; kind?: string; disc?: 'dvd' | 'bluray'; size?: number; modified?: number; hidden?: boolean }
 export type Place = { name: string; path: string; group: string; label?: string; free?: number; total?: number }
-export type Listing = { path: string; parent: string | null; sep: string; entries?: Entry[]; places?: Place[]; counts?: Record<string, number>; truncated?: boolean }
+// Why a folder can't be read when the server runs in a container (the Go
+// module's Note): the user and group it runs as, and the owner of the folder in
+// the way. A host only sends one from a container.
+export type Note = { why: 'denied' | 'empty-mount'; folder: string; uid: number; gid: number; groups?: number[]; ownerUid: number; ownerGid: number }
+export type Listing = { path: string; parent: string | null; sep: string; entries?: Entry[]; places?: Place[]; counts?: Record<string, number>; truncated?: boolean; access?: Note }
 
 const KIND_ICON: Record<string, React.ReactNode> = {
   video: <IconFilm />, audio: <IconAudio />, book: <IconBook />, disc: <IconDisc />, subtitle: <IconSubs />, image: <IconImage />, playlist: <IconAudio />,
@@ -25,6 +29,46 @@ const fmtSize = (b?: number) => {
 }
 const fmtDate = (t?: number) => (t ? new Date(t * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '')
 
+// The guides to fixing a container's user and group, by where it runs. Plain
+// links: nothing about the folder or the IDs goes in them.
+const FIX_GUIDE = 'https://github.com/wittywilla/WittyMediaServer/blob/master/docs/DOCKER.md'
+const FIX_PLACES: [string, string][] = [
+  ['UGREEN', 'ugreen'], ['Synology', 'synology'], ['QNAP', 'qnap'], ['Unraid', 'unraid'],
+  ['TrueNAS SCALE', 'truenas-scale'], ['Asustor', 'asustor'], ['Linux', 'linux'],
+]
+const ids = (u: number, g: number) => `${u}:${g}`
+// asNote keeps a note only if it is one, as it comes from the host.
+const asNote = (n: unknown): Note | null => {
+  const v = n as Note | null | undefined
+  return v && (v.why === 'denied' || v.why === 'empty-mount') && typeof v.folder === 'string' && [v.uid, v.gid, v.ownerUid, v.ownerGid].every(Number.isInteger) ? v : null
+}
+
+// DockerNote says the container's user and group may not match the folder's
+// owner, with the numbers to compare and where to read how to fix it.
+function DockerNote({ note, current, guide }: { note: Note; current?: string; guide: string }) {
+  const runs = ids(note.uid, note.gid), owner = ids(note.ownerUid, note.ownerGid)
+  const name = note.folder.split(/[\\/]/).filter(Boolean).pop() || note.folder
+  const above = !!current && note.folder !== current
+  const sameUser = note.uid === note.ownerUid
+  return (
+    <section className="fx-note" aria-labelledby="fx-note-title">
+      <b id="fx-note-title">{note.why === 'empty-mount' ? 'This folder may only look empty' : "The container's user and group may be wrong"}</b>
+      {note.why === 'empty-mount' ? (
+        <p>The server runs in a container as user and group <code>{runs}</code>, and sees nothing in this folder, which belongs to <code>{owner}</code>. If it has files on the NAS, the container may not be allowed to see them, or the drive was mounted after the container started (restarting the container picks it up).</p>
+      ) : sameUser ? (
+        <p>The server runs in a container as user and group <code>{runs}</code>, and owns {above ? <><b>{name}</b>, a folder above this one</> : 'this folder'}, but the folder's permissions don't let it in.</p>
+      ) : (
+        <p>The server runs in a container as user and group <code>{runs}</code>, but {above ? <><b>{name}</b>, a folder above this one,</> : 'this folder'} belongs to <code>{owner}</code>, so it isn't allowed in.</p>
+      )}
+      <p className="fx-note-links">
+        <a href={`${guide}#user-and-group-ids`} target="_blank" rel="noreferrer">How to fix it</a>
+        <span className="muted" aria-hidden="true">On</span>
+        {FIX_PLACES.map(([label, id]) => <a key={id} href={`${guide}#${id}-user-and-group-ids`} target="_blank" rel="noreferrer" aria-label={`How to fix it on ${label}`}>{label}</a>)}
+      </p>
+    </section>
+  )
+}
+
 const RECENT_KEY = 'wifb.recent'
 const recentFolders = (): string[] => { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').slice(0, 6) } catch { return [] } }
 const rememberFolders = (ps: string[]) => { try { localStorage.setItem(RECENT_KEY, JSON.stringify([...new Set([...ps, ...recentFolders()])].slice(0, 6))) } catch { /* ignore */ } }
@@ -39,17 +83,22 @@ export type FileBrowserProps = {
   title?: string // default "Browse folders"
   where?: string // after the title, default "on the server"
   groupNames?: Record<string, string> // titles for the host's own place groups
+  // Where the guide to a container's user and group is. When a folder can't be
+  // read in a container, the host says why as the listing's access, or as
+  // access in the data of the error list rejects with (err.data.access).
+  fixGuide?: string
 }
 
 // FileBrowser: a folder browser in a window. Read-only; it shows the
 // drives, folders and files the host lists. Pick the folder you are in, or
 // tick several folders and use them all.
-export default function FileBrowser({ list: listFolder, onPick, onClose, multiple = true, title = 'Browse folders', where = 'on the server', groupNames = { libraries: 'In your libraries' } }: FileBrowserProps) {
+export default function FileBrowser({ list: listFolder, onPick, onClose, multiple = true, title = 'Browse folders', where = 'on the server', groupNames = { libraries: 'In your libraries' }, fixGuide = FIX_GUIDE }: FileBrowserProps) {
   const [hist, setHist] = useState<{ list: string[]; at: number }>({ list: [''], at: 0 })
   const cur = hist.list[hist.at]
   const [data, setData] = useState<Listing | null>(null)
   const [places, setPlaces] = useState<Place[]>([])
   const [err, setErr] = useState('')
+  const [note, setNote] = useState<Note | null>(null)
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('')
   const [showFiles, setShowFiles] = useState(true)
@@ -69,10 +118,10 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   }, [])
   useEffect(() => { listFolder('', false).then((d) => setPlaces(d.places || [])).catch(() => {}) }, [listFolder])
   useEffect(() => {
-    setLoading(true); setErr('')
+    setLoading(true); setErr(''); setNote(null)
     listFolder(cur, showHidden)
-      .then((d) => { setData(d); if (!cur) setPlaces(d.places || []) })
-      .catch((e) => setErr(e.message))
+      .then((d) => { setData(d); setNote(asNote(d.access)); if (!cur) setPlaces(d.places || []) })
+      .catch((e) => { setErr(e.message); setNote(asNote(e?.data?.access)) })
       .finally(() => setLoading(false))
   }, [cur, showHidden, reload, listFolder])
   useEffect(() => {
@@ -204,6 +253,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
               </div>
             )}
             {err && <div className="error" role="alert">{err}</div>}
+            <div className="fx-notes" aria-live="polite">{note && <DockerNote note={note} current={err ? cur : data?.path} guide={fixGuide} />}</div>
             {!cur ? (
               <div className="fx-start">
                 <p className="muted">Pick a drive or folder on the left, or click the path bar and type one. Network folders work too, if the server can reach them (for example <code>\\NAS\Media</code> or <code>/mnt/nas</code>).</p>
@@ -239,7 +289,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                     </div>
                   )
                 })}
-                {!loading && rows.length === 0 && <div className="fx-empty muted">{filter ? `Nothing here matches “${filter}”.` : 'No folders here. You can still use this folder.'}</div>}
+                {!loading && !err && !note && rows.length === 0 && <div className="fx-empty muted">{filter ? `Nothing here matches “${filter}”.` : 'No folders here. You can still use this folder.'}</div>}
               </div>
             )}
           </div>

@@ -112,20 +112,32 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   const [typed, setTyped] = useState('')
   const [reload, setReload] = useState(0)
   const list = useRef<HTMLDivElement | null>(null)
+  const dialog = useRef<HTMLDivElement | null>(null)
+  // Like any dialog: focus goes in when it opens, and back where it was when it closes.
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null
+    dialog.current?.focus()
+    return () => { if (back?.isConnected) back.focus() }
+  }, [])
   const search = useRef<HTMLInputElement | null>(null)
   const uid = useId()
+  const pathBar = useRef<HTMLDivElement | null>(null)
 
   const go = useCallback((p: string) => {
     setHist((h) => (h.list[h.at] === p ? h : { list: [...h.list.slice(0, h.at + 1), p], at: h.at + 1 }))
     setFilter(''); setFocus(0); setEditing(false)
   }, [])
   useEffect(() => { listFolder('', false).then((d) => setPlaces(d.places || [])).catch(() => {}) }, [listFolder])
+  // A slow folder (a network share, a disk waking up) can answer after someone
+  // has moved on; only the answer for the folder being looked at is used.
   useEffect(() => {
+    let current = true
     setLoading(true); setErr(''); setNote(null)
     listFolder(cur, showHidden)
-      .then((d) => { setData(d); setNote(asNote(d.access)); if (!cur) setPlaces(d.places || []) })
-      .catch((e) => { setErr(e.message); setNote(asNote(e?.data?.access)) })
-      .finally(() => setLoading(false))
+      .then((d) => { if (current) { setData(d); setNote(asNote(d.access)); if (!cur) setPlaces(d.places || []) } })
+      .catch((e) => { if (current) { setErr(e.message); setNote(asNote(e?.data?.access)) } })
+      .finally(() => { if (current) setLoading(false) })
+    return () => { current = false }
   }, [cur, showHidden, reload, listFolder])
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !editing) onClose() }
@@ -157,6 +169,8 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
     }
     return out
   }, [data])
+  // A long path shows its end, the folder you're in; it scrolls back to the start.
+  useEffect(() => { const b = pathBar.current; if (b) b.scrollLeft = b.scrollWidth }, [crumbs, editing])
 
   const toggle = (p: string) => setPicked((x) => (x.includes(p) ? x.filter((y) => y !== p) : multiple ? [...x, p] : [p]))
   const finish = (ps: string[]) => { if (ps.length) { rememberFolders(ps); onPick(ps) } }
@@ -165,6 +179,15 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
   // Enter and Space work the list only while it has focus, so buttons and links
   // still press with them.
   const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab' && dialog.current) {
+      // Tab and Shift+Tab go round the window, not out to the page behind it.
+      const all = [...dialog.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex="0"]')].filter((el) => el.getClientRects().length)
+      const at = document.activeElement
+      if (!all.length) return
+      if (e.shiftKey && (at === all[0] || at === dialog.current)) { e.preventDefault(); all[all.length - 1].focus() }
+      else if (!e.shiftKey && at === all[all.length - 1]) { e.preventDefault(); all[0].focus() }
+      return
+    }
     const t = e.target as HTMLElement
     if (editing || t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return
     const inList = t === list.current
@@ -187,7 +210,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
 
   return createPortal(
     <div className="modal-backdrop fx-backdrop" onClick={onClose}>
-      <div className="fx" role="dialog" aria-modal="true" aria-labelledby="fx-title" onClick={(e) => e.stopPropagation()} onKeyDown={onKey}>
+      <div className="fx" ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="fx-title" onClick={(e) => e.stopPropagation()} onKeyDown={onKey}>
         <header className="fx-head">
           <div className="fx-title"><b id="fx-title">{title}</b>{where && <span className="muted">{where}</span>}</div>
           <button type="button" className="btn sm ghost square" onClick={onClose} aria-label="Close"><IconClose /></button>
@@ -207,7 +230,7 @@ export default function FileBrowser({ list: listFolder, onPick, onClose, multipl
                 placeholder="Type a folder, e.g. D:\Movies, /mnt/media or \\NAS\Media" aria-label="Folder path" spellCheck={false} />
             </form>
           ) : (
-            <div className="fx-path" onClick={(e) => { if (e.target === e.currentTarget) { setTyped(data?.path || ''); setEditing(true) } }} title="Click to type a path (Ctrl+L)">
+            <div className="fx-path" ref={pathBar} onClick={(e) => { if (e.target === e.currentTarget) { setTyped(data?.path || ''); setEditing(true) } }} title="Click to type a path (Ctrl+L)">
               <button type="button" className="fx-crumb" onClick={() => go('')}><IconHome /> <span>This server</span></button>
               {crumbs.map((c) => <span key={c.path} className="fx-crumb-wrap"><span className="fx-sep">›</span><button type="button" className="fx-crumb" onClick={() => go(c.path)}>{c.name}</button></span>)}
             </div>

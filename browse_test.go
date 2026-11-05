@@ -1,8 +1,10 @@
 package wittyintegratedfilebrowser
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -100,5 +102,40 @@ func TestPlaces(t *testing.T) {
 	}
 	if drives == 0 || mine != 1 || gone != 0 {
 		t.Errorf("Places: drives=%d mine=%d gone=%d (%+v)", drives, mine, gone, ps)
+	}
+}
+
+// Past the limit, folders are kept and files fill what's left, whatever the
+// names: the browser is for choosing folders.
+func TestListKeepsFoldersPastTheLimit(t *testing.T) {
+	root := t.TempDir()
+	for i := 0; i < 30; i++ {
+		if err := os.WriteFile(filepath.Join(root, fmt.Sprintf("A%04d.jpg", i)), nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, d := range []string{"extras", "zz", "Behind"} {
+		if err := os.Mkdir(filepath.Join(root, d), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	l, err := List(root, Options{MaxEntries: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range l.Entries {
+		names = append(names, e.Name)
+	}
+	want := []string{"Behind", "extras", "zz", "A0000.jpg", "A0001.jpg", "A0002.jpg", "A0003.jpg", "A0004.jpg", "A0005.jpg", "A0006.jpg"}
+	if !l.Truncated || strings.Join(names, " ") != strings.Join(want, " ") {
+		t.Errorf("entries = %v (truncated %v), want %v", names, l.Truncated, want)
+	}
+	if l.Counts["folder"] != 3 {
+		t.Errorf("counts = %v, want 3 folders", l.Counts)
+	}
+	few, _ := List(root, Options{MaxEntries: 2})
+	if len(few.Entries) != 2 || few.Entries[0].Name != "Behind" || few.Entries[1].Name != "extras" || !few.Truncated {
+		t.Errorf("more folders than the limit: %+v", few.Entries)
 	}
 }

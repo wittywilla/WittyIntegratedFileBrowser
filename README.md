@@ -81,7 +81,7 @@ To use it in another app, `Places(extra...)` says where to start, and `List(path
 
 ## Licence
 
-Apache-2.0: see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
+GNU Affero General Public License v3.0 (or later): see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, please keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
 
 ## Legal
 
@@ -111,5 +111,5 @@ To release:
 
 To take a version back, run the *withdraw* workflow from the *Actions* tab. It adds the version to a signed list on the release tagged `withdrawals`, which servers read.
 
-Licensed under Apache-2.0: see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Licensed under AGPL-3.0-or-later: see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 <!-- /module-kit -->

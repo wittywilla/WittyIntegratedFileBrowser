@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 WittyWilla and contributors
+
 // Package wittyintegratedfilebrowser lists a computer's drives, folders and
 // files for a folder browser shown in a web page, so folders can be chosen
 // from another device than the one holding them. It only reads: nothing is

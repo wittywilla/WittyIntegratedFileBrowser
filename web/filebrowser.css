@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Copyright (C) 2026 WittyWilla and contributors */
 /* WittyIntegratedFileBrowser. Colours come from the host's theme variables
    where they exist (--bg, --bg-2..4, --fg, --fg-2/3, --border, --accent,
    --accent-rgb, --accent-fg, --shadow) and fall back to a dark scheme. The

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 WittyWilla and contributors
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { IconAudio, IconBook, IconCheck, IconClose, IconDisc, IconDrive, IconFile, IconFilm, IconFolder, IconHome, IconImage, IconLeft, IconLibrary, IconRefresh, IconRight, IconSearch, IconSubs, IconUp } from './icons'

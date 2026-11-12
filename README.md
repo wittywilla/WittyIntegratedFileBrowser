@@ -83,6 +83,15 @@ To use it in another app, `Places(extra...)` says where to start, and `List(path
 
 GNU Affero General Public License v3.0 (or later): see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, please keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
 
+
+## In every app: its server-driven UI
+
+It carries its own `sdui.json`: its theme scope, and a data source its helper answers, `wittyintegratedfilebrowser.places`: the server's drives and usual folders with the space left on each, for administrators only, offered in the page editor's gallery as **Server drives and space**.
+
+**Stays in its own code:** the folder window itself (places, filter, multi-select, disc folders marked, and help when a folder can't be read), which opens from Settings, Libraries.
+
+The file is checked with `wittymodule check` and described in WittyMediaServer's [docs/SDUI-MODULES.md](https://github.com/wittywilla/WittyMediaServer/blob/master/docs/SDUI-MODULES.md).
+
 ## Legal
 
 WittyIntegratedFileBrowser is an independent open-source project. It isn't associated with,

@@ -5,6 +5,7 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 
 ## Unreleased
 
+- **A data source of its own** (`sdui.json`, answered by the helper's `sdui.items`): the server's drives and usual folders with the space left on each, for administrators only, and a row for the page editor's gallery. Choosing folders still happens in the folder window, from Settings.
 - **Module API 4**, for WittyMediaServer 0.8.0-alpha and later: the module carries its own server-driven UI in `sdui.json`, which `wittymodule pack` puts in every archive.
 - Carries `sdui.json` with its theme scope. It adds no pages: its folder window opens from Settings.
 - **WittyIntegratedFileBrowser 0.3.0:** Fits WittyMediaServer 0.8.x.

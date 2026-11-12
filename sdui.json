@@ -2,6 +2,42 @@
   "format": "wittymodule-sdui",
   "formatVersion": 1,
   "module": "wittyintegratedfilebrowser",
-  "catalog": 2,
-  "theme": { "scope": "wittyintegratedfilebrowser", "label": "Folder browser" }
+  "catalog": 7,
+  "theme": {
+    "scope": "wittyintegratedfilebrowser",
+    "label": "Folder browser"
+  },
+  "sources": [
+    {
+      "type": "wittyintegratedfilebrowser.places",
+      "label": "The server's drives and folders",
+      "description": "The drives and usual folders on the server, each with the space left. Answered for administrators only; empty for anyone else.",
+      "icon": "folder",
+      "yields": [
+        "library"
+      ],
+      "cardStyle": "tile",
+      "paged": true,
+      "title": "Server folders"
+    }
+  ],
+  "presets": [
+    {
+      "id": "wittyintegratedfilebrowser-places",
+      "label": "Server drives and space",
+      "description": "A row of the server's drives and usual folders, with the space left on each. Only administrators see it.",
+      "section": {
+        "id": "server-places",
+        "component": "Shelf",
+        "props": {
+          "title": "Server drives",
+          "cardStyle": "tile",
+          "seeAll": "never"
+        },
+        "source": {
+          "type": "wittyintegratedfilebrowser.places"
+        }
+      }
+    }
+  ]
 }

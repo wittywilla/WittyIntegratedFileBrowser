@@ -43,6 +43,17 @@ func handle(method string, params json.RawMessage) (any, []byte, error) {
 		return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: "the call is unreadable"}
 	}
 	switch method {
+	case "sdui.items":
+		// A data source of the module's own (sdui.json): the server's drives and usual folders.
+		r, err := wittyintegratedfilebrowser.ParseItemsRequest(params)
+		if err != nil {
+			return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: "the call is unreadable"}
+		}
+		a, err := wittyintegratedfilebrowser.PlaceItems(r, wittyintegratedfilebrowser.PlacesFor(p.Home))
+		if err != nil {
+			return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: err.Error()}
+		}
+		return a, nil, nil
 	case "places":
 		return wittyintegratedfilebrowser.PlacesFor(p.Home), nil, nil
 	case "list":

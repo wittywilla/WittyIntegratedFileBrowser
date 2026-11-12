@@ -10,7 +10,8 @@
     ".": "./web/index.ts"
   },
   "scripts": {
-    "build:bundle": "node build-bundle.mjs"
+    "build:bundle": "node build-bundle.mjs",
+    "test": "node sdui/kit/write-sdui.mjs --check sdui.json"
   },
   "files": [
     "web",

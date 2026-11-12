@@ -1,0 +1,7 @@
+{
+  "format": "wittymodule-sdui",
+  "formatVersion": 1,
+  "module": "wittyintegratedfilebrowser",
+  "catalog": 2,
+  "theme": { "scope": "wittyintegratedfilebrowser", "label": "Folder browser" }
+}

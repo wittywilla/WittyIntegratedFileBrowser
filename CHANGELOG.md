@@ -5,6 +5,7 @@ What changed in WittyIntegratedFileBrowser, newest first. What changed before it
 
 ## Unreleased
 
+- Carries `sdui.json` with its theme scope. It adds no pages: its folder window opens from Settings.
 - **WittyIntegratedFileBrowser 0.3.0:** Fits WittyMediaServer 0.8.x.
 
 - After a folder can't be opened, the path bar shows where it tried, the folder before it is gone, and Use this folder can't choose it; Up and Backspace go to the folder above the one tried (#5).

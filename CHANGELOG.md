@@ -3,9 +3,9 @@
 What changed in WittyIntegratedFileBrowser, newest first. What changed before it had a repository of its own is in the
 [WittyMediaServer changelog](https://github.com/wittywilla/WittyMediaServer/blob/master/CHANGELOG.md).
 
-## Unreleased
+## 0.4.0
 
-- **Module API 5 (0.4.0):** carries `integration.json`, built with WittyModule 0.5.2. It claims no routes, data or lifecycle: the server keeps `GET /api/fs`, calls the helper's `places` and `list` as before and checks what they answer. The web part exports `register(host)`, which claims nothing yet; the folder window stays its default export.
+- **Module API 5 (0.4.0):** carries `integration.json`, built on WittyModule 0.5.4 (its workflows use it too). It claims no routes, data or lifecycle: the server keeps `GET /api/fs`, calls the helper's `places` and `list` as before and checks what they answer. The web part exports `register(host)`, which claims nothing yet; the folder window stays its default export.
 - **Server folders on every app, a TV's included:** an SDUI page (`wittyintegratedfilebrowser`, under More, for administrators only) with the server's drives and usual folders, and each folder's folders and files, opened with `?name=<path>`, with Up. A new source answers it, `wittyintegratedfilebrowser.folder`; places now open their folder. A folder on another machine, or a path that isn't a full one, is never opened. `sdui.json` is written from Go (`ui/ui.go`).
 - Built with WittyModule's web builder; the module's own copy of `build-bundle.mjs` and its copy of the old SDUI kit (`sdui/kit/`) are gone.
 

@@ -45,7 +45,15 @@ func Items(r sdui.ItemsRequest, places func() []Place) (sdui.ItemsAnswer, error)
 	path, _ := r.Source["path"].(string)
 	path = strings.TrimSpace(path)
 	if t == ui.SourcePlaces || path == "" || strings.HasPrefix(path, "$") {
-		return page(r, placeItems(places())), nil
+		all := placeItems(places())
+		// The folder source yields views (sdui.json): a server keeps only items of the kinds a
+		// source says it yields, so its places are views too.
+		if t == ui.SourceFolder {
+			for i := range all {
+				all[i].Kind = "view"
+			}
+		}
+		return page(r, all), nil
 	}
 	return page(r, folderItems(path)), nil
 }

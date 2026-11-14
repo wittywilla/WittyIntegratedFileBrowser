@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -121,3 +122,35 @@ func TestFolderItems(t *testing.T) {
 }
 
 func itoa(n int) string { b, _ := json.Marshal(n); return string(b) }
+
+// A server keeps only the items of the kinds a source's spec yields, so every item each source
+// answers, places and folders alike, has to be one of them.
+func TestItemsAreWhatEachSourceYields(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "Albums"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "song.mp3"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	places := func() []Place { return []Place{{Name: "Media", Path: dir, Group: "drives"}} }
+	yields := map[string][]string{}
+	for _, s := range ui.UI().Sources {
+		yields[s.Type] = s.Yields
+	}
+	for _, src := range []sdui.Source{
+		{"type": ui.SourcePlaces},
+		{"type": ui.SourceFolder},
+		{"type": ui.SourceFolder, "path": dir},
+	} {
+		a, err := Items(sdui.ItemsRequest{Source: src, Limit: 50, Viewer: sdui.Viewer{ProfileKind: "adult", Admin: true}}, places)
+		if err != nil || len(a.Items) == 0 {
+			t.Fatalf("%v: %+v %v", src, a, err)
+		}
+		for _, it := range a.Items {
+			if !slices.Contains(yields[src.Type()], it.Kind) {
+				t.Errorf("%v: %q is a %q, and the source yields %v", src, it.Title, it.Kind, yields[src.Type()])
+			}
+		}
+	}
+}

@@ -2,23 +2,57 @@
   "format": "wittymodule-sdui",
   "formatVersion": 1,
   "module": "wittyintegratedfilebrowser",
-  "catalog": 7,
+  "catalog": 8,
   "theme": {
     "scope": "wittyintegratedfilebrowser",
     "label": "Folder browser"
   },
-  "sources": [
+  "pages": [
     {
-      "type": "wittyintegratedfilebrowser.places",
-      "label": "The server's drives and folders",
-      "description": "The drives and usual folders on the server, each with the space left. Answered for administrators only; empty for anyone else.",
+      "id": "wittyintegratedfilebrowser",
+      "kind": "custom",
+      "title": "Server folders",
       "icon": "folder",
-      "yields": [
-        "library"
-      ],
-      "cardStyle": "tile",
-      "paged": true,
-      "title": "Server folders"
+      "description": "The server's drives and usual folders, and what each folder holds, opened with ?name=<a folder's path>: folders open their own page, Up goes to the folder above. For administrators, on every app and TV. Read-only.",
+      "scope": "wittyintegratedfilebrowser",
+      "sections": [
+        {
+          "id": "folder",
+          "component": "List",
+          "props": {
+            "empty": "message",
+            "emptyText": "Nothing here, or the server isn't allowed to open this folder.",
+            "focusable": true,
+            "title": ""
+          },
+          "source": {
+            "path": "$name",
+            "type": "wittyintegratedfilebrowser.folder"
+          },
+          "when": {
+            "admin": true
+          }
+        },
+        {
+          "id": "admins",
+          "component": "Notice",
+          "props": {
+            "text": "Only an administrator can look through the server's folders.",
+            "tone": "info"
+          },
+          "when": {
+            "admin": false
+          }
+        },
+        {
+          "id": "readonly",
+          "component": "Notice",
+          "props": {
+            "text": "Read-only: nothing on the server can be changed from here. Add a folder to a library in Settings, Libraries.",
+            "tone": "info"
+          }
+        }
+      ]
     }
   ],
   "presets": [
@@ -30,13 +64,70 @@
         "id": "server-places",
         "component": "Shelf",
         "props": {
-          "title": "Server drives",
           "cardStyle": "tile",
-          "seeAll": "never"
+          "seeAll": "never",
+          "title": "Server drives"
         },
         "source": {
           "type": "wittyintegratedfilebrowser.places"
         }
+      }
+    }
+  ],
+  "sources": [
+    {
+      "type": "wittyintegratedfilebrowser.places",
+      "label": "The server's drives and folders",
+      "description": "The drives and usual folders on the server, each with the space left, opening the folder. Answered for administrators only; empty for anyone else.",
+      "icon": "folder",
+      "category": "",
+      "yields": [
+        "library"
+      ],
+      "cardStyle": "tile",
+      "paged": true,
+      "title": "Server folders",
+      "since": 8
+    },
+    {
+      "type": "wittyintegratedfilebrowser.folder",
+      "label": "A folder on the server",
+      "description": "One folder on the server: the way up, then its folders, each opening its own page, then its files with their sizes. Read-only. With no path, the drives and usual folders. Answered for administrators only; empty for anyone else.",
+      "icon": "folder",
+      "category": "",
+      "params": [
+        {
+          "name": "path",
+          "type": "string",
+          "label": "Folder",
+          "help": "The folder's full path on the server, $name on the folder page. Empty: the drives and usual folders.",
+          "since": 0
+        }
+      ],
+      "yields": [
+        "view"
+      ],
+      "cardStyle": "tile",
+      "paged": true,
+      "since": 8
+    }
+  ],
+  "navigation": [
+    {
+      "id": "wittyintegratedfilebrowser",
+      "label": "Server folders",
+      "icon": "folder",
+      "type": "page",
+      "page": "wittyintegratedfilebrowser",
+      "when": {
+        "admin": true
+      },
+      "placement": {
+        "desktop": "more",
+        "phone": "more",
+        "tablet": "more",
+        "tv": "more",
+        "web": "more"
       }
     }
   ]

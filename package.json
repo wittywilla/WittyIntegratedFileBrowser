@@ -1,6 +1,6 @@
 {
   "name": "@wittywilla/wittyintegratedfilebrowser",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A folder browser in a window, for choosing folders on another computer from any device: drives, places, path bar, filtering, several folders at once. Read-only.",
   "license": "AGPL-3.0-or-later",
   "author": "WittyWilla (https://github.com/wittywilla)",
@@ -10,8 +10,7 @@
     ".": "./web/index.ts"
   },
   "scripts": {
-    "build:bundle": "node build-bundle.mjs",
-    "test": "node sdui/kit/write-sdui.mjs --check sdui.json"
+    "build:bundle": "node ${WITTYMODULE:-../WittyModule}/kit/web/build-bundle.mjs ."
   },
   "files": [
     "web",

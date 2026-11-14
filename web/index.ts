@@ -21,3 +21,10 @@
 // The host lists folders; the server half is the Go module of the same name.
 export { default } from './FileBrowser'
 export type { Entry, FileBrowserProps, Listing, Note, Place } from './FileBrowser'
+
+// Module API 5: the web part's register(host). It claims nothing yet: WittyModule 0.5.2's
+// integration.json has no hook for a folder picker, so the server's "Browse folders" takes the
+// default export above (FileBrowser, given list, onClose and onPick) as it always has.
+export function register(_host: unknown): Record<string, never> {
+  return {}
+}

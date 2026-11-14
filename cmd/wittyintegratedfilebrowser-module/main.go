@@ -25,14 +25,32 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/wittywilla/wittyintegratedfilebrowser"
 	"github.com/wittywilla/wittymodule"
 )
 
+// lastHome is the home folder the server last gave with "places", for the folder page's places.
+var lastHome atomic.Pointer[string]
+
+func home() string {
+	if h := lastHome.Load(); h != nil {
+		return *h
+	}
+	return ""
+}
+
 func main() { wittymodule.Main(wittyintegratedfilebrowser.ManifestJSON, handle) }
 
 func handle(method string, params json.RawMessage) (any, []byte, error) {
+	// The module's data sources (sdui.json): the server's drives and folders, and one folder.
+	// A helper starts with almost no environment, so its home is the one it was told last.
+	if res, blob, err, ok := wittyintegratedfilebrowser.Answers(func() []wittyintegratedfilebrowser.Place {
+		return wittyintegratedfilebrowser.PlacesFor(home())
+	}).Handle(method, params); ok {
+		return res, blob, err
+	}
 	var p struct {
 		Path       string `json:"path"`
 		ShowHidden bool   `json:"showHidden"`
@@ -43,18 +61,8 @@ func handle(method string, params json.RawMessage) (any, []byte, error) {
 		return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: "the call is unreadable"}
 	}
 	switch method {
-	case "sdui.items":
-		// A data source of the module's own (sdui.json): the server's drives and usual folders.
-		r, err := wittyintegratedfilebrowser.ParseItemsRequest(params)
-		if err != nil {
-			return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: "the call is unreadable"}
-		}
-		a, err := wittyintegratedfilebrowser.PlaceItems(r, wittyintegratedfilebrowser.PlacesFor(p.Home))
-		if err != nil {
-			return nil, nil, &wittymodule.CallError{Code: "bad-call", Message: err.Error()}
-		}
-		return a, nil, nil
 	case "places":
+		lastHome.Store(&p.Home)
 		return wittyintegratedfilebrowser.PlacesFor(p.Home), nil, nil
 	case "list":
 		if p.Path == "" {

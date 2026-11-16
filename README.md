@@ -2,6 +2,8 @@
 
 Lets you choose a server's folders from any device. A browser's own folder window only sees the device it runs on, so without this a phone or a TV can't pick folders on the server, and you type the path instead.
 
+It's a module of [WittyMediaServer](https://github.com/wittywilla/WittyMediaServer) ([wittymediaserver.com](https://wittymediaserver.com)): the server runs it as a helper program, and its web part is the folder window in the app. This version is built for module API 5, the only one WittyMediaServer 0.8.0-alpha takes.
+
 <!-- pictures -->
 
 ![Choosing a folder on the server, in the page](docs/images/folder-browser.webp)
@@ -26,7 +28,7 @@ How to use it is in **Help** inside WittyMediaServer: see Getting started.
 
 ## How to get it
 
-An admin adds it from the module store inside WittyMediaServer: **Settings → Modules**, then **Browse the store**, then **Add** beside WittyIntegratedFileBrowser. That needs WittyMediaServer 0.6.0-alpha or later, and it works with nothing older. The range this version fits is in `module.json`: 0.6.0-alpha through 0.6.x.
+An admin adds it from the module store inside WittyMediaServer: **Settings → Modules**, then **Browse the store**, then **Add** beside WittyIntegratedFileBrowser. This version is built for module API 5 and fits WittyMediaServer 0.8.0-alpha through 0.8.x, as its `module.json` says. It works with nothing older: the server takes module API 5 only.
 
 ## What it needs
 
@@ -81,14 +83,9 @@ It is built by WittyModule's one builder (`kit/web/build-bundle.mjs`), found at 
 
 To use it in another app, `Places(extra...)` says where to start, and `List(path, Options)` gives a folder's folders and files, with `ErrNotFound` and `ErrDenied`. Serve both as JSON for the React window in `web/`, which takes `list`, `onPick` and `onClose`. When a folder can't be read, `Explain(path)` (the helper's `access` call) says why in a container, or nil; send it as `access` beside the listing, or in the error's data, and the window shows it. The checks that need a container and another user are in [docs/TESTING.md](docs/TESTING.md).
 
-## Licence
-
-GNU Affero General Public License v3.0 (or later): see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, please keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
-
-
 ## Module API 5, and every app
 
-It is built for module API 5 (WittyMediaServer 0.8.0-alpha and later), and carries `integration.json` beside `module.json` and `sdui.json`. It claims no routes, data or lifecycle: the server keeps its folder route, `GET /api/fs`, calls this helper's `places` and `list` itself, checks every answer against the folder asked for, and names what kind of media each file is. Without this module, a folder's path is typed instead. The web part exports `register(host)`, which claims nothing yet (WittyModule 0.5.2 has no hook for a folder picker), and its default export is the folder window that Settings, Libraries opens.
+It is built for module API 5 (WittyMediaServer 0.8.0-alpha through 0.8.x), and carries `integration.json` beside `module.json` and `sdui.json`. It claims no routes, data or lifecycle: the server keeps its folder route, `GET /api/fs`, calls this helper's `places` and `list` itself, checks every answer against the folder asked for, and names what kind of media each file is. Without this module, a folder's path is typed instead. The web part exports `register(host)`, which claims nothing yet (WittyModule 0.5.2 has no hook for a folder picker), and its default export is the folder window that Settings, Libraries opens.
 
 Its `sdui.json` is written from Go (`ui/ui.go`; `go test ./ui -update-sdui` writes it, and `go test ./ui` fails when it's out of date), so every app draws its screens natively, a TV's included:
 
@@ -98,6 +95,10 @@ Its `sdui.json` is written from Go (`ui/ui.go`; `go test ./ui -update-sdui` writ
 **Stays in its own code:** the folder window itself (places, filter, multi-select, disc folders marked, and help when a folder can't be read).
 
 The files are checked with `wittymodule check` and described in WittyMediaServer's [docs/MODULES-API5.md](https://github.com/wittywilla/WittyMediaServer/blob/master/docs/MODULES-API5.md) and [docs/SDUI-MODULES.md](https://github.com/wittywilla/WittyMediaServer/blob/master/docs/SDUI-MODULES.md).
+
+## Licence
+
+GNU Affero General Public License v3.0 (or later): see [LICENSE](LICENSE) and [NOTICE](NOTICE). If you redistribute it or build on it, please keep the NOTICE attribution. Each release archive carries a `THIRD-PARTY-NOTICES.txt` for what its programs link.
 
 ## Legal
 

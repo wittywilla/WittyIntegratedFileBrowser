@@ -3,6 +3,10 @@
 What changed in WittyIntegratedFileBrowser, newest first. What changed before it had a repository of its own is in the
 [WittyMediaServer changelog](https://github.com/wittywilla/WittyMediaServer/blob/master/CHANGELOG.md).
 
+## 0.4.1
+
+- The README's picture is retaken from WittyMediaServer 0.8.0-alpha, on a test server with open media only.
+
 ## 0.4.0
 
 - **Module API 5 (0.4.0):** carries `integration.json`, built on WittyModule 0.5.4 (its workflows use it too). It claims no routes, data or lifecycle: the server keeps `GET /api/fs`, calls the helper's `places` and `list` as before and checks what they answer. The web part exports `register(host)`, which claims nothing yet; the folder window stays its default export.

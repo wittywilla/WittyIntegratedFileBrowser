@@ -1,7 +1,7 @@
 {
   "id": "wittyintegratedfilebrowser",
   "name": "WittyIntegratedFileBrowser",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "repo": "wittywilla/WittyIntegratedFileBrowser",
   "license": "AGPL-3.0-or-later",
   "delivery": "helper",

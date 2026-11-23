@@ -1,6 +1,6 @@
 {
   "name": "@wittywilla/wittyintegratedfilebrowser",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A folder browser in a window, for choosing folders on another computer from any device: drives, places, path bar, filtering, several folders at once. Read-only.",
   "license": "AGPL-3.0-or-later",
   "author": "WittyWilla (https://github.com/wittywilla)",
@@ -25,6 +25,6 @@
   "devDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "vite": "^8.3.5"
+    "vite": "^8.3.8"
   }
 }

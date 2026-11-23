@@ -3,6 +3,10 @@
 What changed in WittyIntegratedFileBrowser, newest first. What changed before it had a repository of its own is in the
 [WittyMediaServer changelog](https://github.com/wittywilla/WittyMediaServer/blob/master/CHANGELOG.md).
 
+## 0.4.3
+
+- **Updated dependencies:** github.com/wittywilla/wittymodule from 0.5.4 to 0.5.5; actions/setup-go from 7.0.0 to 7.1.0; vite from 8.3.5 to 8.3.8; golang.org/x/sys from 0.49.0 to 0.50.0.
+
 ## 0.4.2
 
 - **Drive sizes match the rest of the server.** Server folders counted 1000 bytes to a KB while the file browser's own window, Statistics and the server count 1024, as your computer does, so the same disk read 511 GB in one place and 476 GB in another. It now reads the same everywhere.

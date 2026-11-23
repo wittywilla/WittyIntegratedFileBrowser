@@ -3,6 +3,16 @@
 What changed in WittyIntegratedFileBrowser, newest first. What changed before it had a repository of its own is in the
 [WittyMediaServer changelog](https://github.com/wittywilla/WittyMediaServer/blob/master/CHANGELOG.md).
 
+## 0.4.2
+
+- **Drive sizes match the rest of the server.** Server folders counted 1000 bytes to a KB while the file browser's own window, Statistics and the server count 1024, as your computer does, so the same disk read 511 GB in one place and 476 GB in another. It now reads the same everywhere.
+- **Fixed:** asking for a page of server folders with an enormous size could stop the file browser's helper.
+
+## Developer notes for 0.4.2
+
+- `page` compares the limit with what's left instead of adding it to the offset: `start+limit` wrapped round for a limit near the largest int and sliced with a negative end (a panic, found by the new `FuzzItemsPaging`).
+- `size` uses 1024, as `fmtSize` in `web/FileBrowser.tsx` and the server's `fmtBytes` do; `TestSizeCountsLikeTheServer`.
+
 ## 0.4.1
 
 - The README's picture is retaken from WittyMediaServer 0.8.0-alpha, on a test server with open media only.

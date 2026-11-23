@@ -61,7 +61,8 @@ func Items(r sdui.ItemsRequest, places func() []Place) (sdui.ItemsAnswer, error)
 func page(r sdui.ItemsRequest, all []sdui.Item) sdui.ItemsAnswer {
 	start := min(max(r.Offset, 0), len(all))
 	end := len(all)
-	if r.Limit > 0 && start+r.Limit < end {
+	// Compared as what's left, not start+limit: a limit near the largest int would wrap round.
+	if r.Limit > 0 && r.Limit < end-start {
 		end = start + r.Limit
 	}
 	return sdui.ItemsAnswer{Items: all[start:end], More: end < len(all), Total: len(all)}
@@ -153,8 +154,10 @@ func folderItems(path string) []sdui.Item {
 // fileIcons is the catalogue's icon for each kind of file FileKind names.
 var fileIcons = map[string]string{"video": "video", "audio": "music", "book": "book", "disc": "disc", "image": "photo", "subtitle": "list"}
 
+// size is a number of bytes as the server and the file browser's own window write it: 1024 to a
+// KB, as the operating systems show a disk, so a drive reads the same everywhere.
 func size(b uint64) string {
-	const k = 1000
+	const k = 1024
 	switch {
 	case b >= k*k*k*k:
 		return fmt.Sprintf("%.1f TB", float64(b)/(k*k*k*k))

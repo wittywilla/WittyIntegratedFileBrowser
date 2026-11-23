@@ -29,7 +29,7 @@ func ask(t *testing.T, raw string) sdui.ItemsRequest {
 func TestPlaceItems(t *testing.T) {
 	places := func() []Place {
 		return []Place{
-			{Name: "Media", Path: "/mnt/media", Group: "drives", Free: 1_500_000_000_000, Total: 4_000_000_000_000},
+			{Name: "Media", Path: "/mnt/media", Group: "drives", Free: 1_649_267_441_664, Total: 4_398_046_511_104},
 			{Name: "Movies", Path: "/home/me/Movies", Group: "folders"},
 			{Name: "NAS", Path: "/mnt/nas", Group: "drives", Label: "Network"},
 		}
@@ -151,6 +151,21 @@ func TestItemsAreWhatEachSourceYields(t *testing.T) {
 			if !slices.Contains(yields[src.Type()], it.Kind) {
 				t.Errorf("%v: %q is a %q, and the source yields %v", src, it.Title, it.Kind, yields[src.Type()])
 			}
+		}
+	}
+}
+
+// A drive's size reads as the server and the file browser's window write it: 1024 to a KB.
+func TestSizeCountsLikeTheServer(t *testing.T) {
+	for b, want := range map[uint64]string{
+		512:               "512 bytes",
+		2048:              "2 KB",
+		5 << 20:           "5 MB",
+		548_682_072_064:   "511 GB",
+		2_000_398_934_016: "1.8 TB",
+	} {
+		if got := size(b); got != want {
+			t.Errorf("size(%d) = %q, want %q", b, got, want)
 		}
 	}
 }
